@@ -31,6 +31,12 @@ def extract_facts(source: Source) -> dict:
     elif source.path.startswith("salesforce-api/sobjects/") and source.path.endswith("/describe.json"):
         from .schema import parse_describe
         parse_describe(facts)
+    elif source.metadata_type == "ReportType" and source.path.startswith("salesforce-api/reportTypes/") and source.path.endswith("/describe.json"):
+        from .reports import parse_report_type_describe
+        parse_report_type_describe(facts)
+    elif source.metadata_type == "ReportType" and source.path.startswith("salesforce-api/reportTypes/") and source.path.endswith("/status.json"):
+        from .reports import parse_report_type_status
+        parse_report_type_status(facts)
     elif source.path.endswith((".cls", ".trigger", ".soql", ".sosl")):
         from .apex import parse_apex
         parse_apex(facts)
@@ -88,9 +94,11 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                     existing["source_files"].append(node["source_file"])
                 for k in ("reference_to", "relationship_name", "data_type", "annotations",
                           "related_object", "recipient_object", "is_test", "child_relationships",
-                          "parent_relationship_name"):
+                          "parent_relationship_name", "report_type", "report_columns", "report_columns_source", "report_type_api_status", "schema_roots"):
                     if node.get(k):
                         existing[k] = node[k]
+                if node.get("aliases"):
+                    existing["aliases"] = sorted(set(existing.get("aliases", [])) | set(node["aliases"]))
                 # CSS/sidecars can sort before the semantic file in a bundle.
                 # Keep any partial/unparsed warning, otherwise the best parser
                 # actually used for that component determines its coverage.
@@ -250,12 +258,43 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         if ref["relation"] == "controller" and ref["target_kind"] == "ApexClass":
             aura_controllers.setdefault(ref["source"], []).append(ref["target_name"])
 
-    def resolve(ref):
+    def resolve(ref, intermediates=None):
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
+        if kind == "ReportColumn":
+            report = nodes.get(ref["source"], {})
+            type_name = report.get("report_type", "")
+            ref["report_type"] = type_name
+            types = lookup("ReportType", type_name, ns) or (lookup("ReportType", type_name[:-3], ns) if type_name.endswith("__c") else [])
+            raw = ref.get("report_column", name)
+            candidates = {raw.casefold(), raw.replace("$", ".").casefold(), raw.replace("$", "").casefold()}
+            resolved, evidence, routes = [], [], []
+            for report_type in types:
+                mappings = report_type.get("report_columns", {})
+                aliases = {raw.casefold()} if raw.casefold() in mappings else candidates
+                for alias in sorted(aliases):
+                    for entry in mappings.get(alias, []):
+                        for path in entry["paths"]:
+                            path_fields = []
+                            found = field_path(path, ns, path_fields)
+                            if found:
+                                resolved.extend(found)
+                                routes.append(path_fields)
+                                evidence.append({**report_type["report_columns_source"], "line": entry["line"],
+                                                 "status": report_type.get("report_type_api_status", {}).get("status", "captured")})
+                                break
+            if resolved:
+                ref["binding_evidence"] = sorted({(e["source_file"], e["line"]): e for e in evidence}.values(), key=lambda e: (e["source_file"], e["line"]))
+                unique_routes = {tuple(f["id"] for f in route): route for route in routes}
+                if intermediates is not None and len(unique_routes) == 1 and len({n["id"] for n in resolved}) == 1:
+                    intermediates.extend(next(iter(unique_routes.values())))
+                return resolved
+            # Preserve previously supported explicit object.field XML, but
+            # never infer an object from a bare report alias or a label.
+            return field_path(raw.replace("$", "."), ns, intermediates)
         if kind == "FieldPath":
-            found = field_path(name, ns)
+            found = field_path(name, ns, intermediates)
             if not found and ref.get("context_object") and not lookup("CustomObject", name.split(".")[0], ns):
-                found = field_path(ref["context_object"] + "." + name, ns)
+                found = field_path(ref["context_object"] + "." + name, ns, intermediates)
             return found
         if kind == "ReportType" and name.endswith("__c"):
             return lookup(kind, name, ns) or lookup(kind, name[:-3], ns)
@@ -281,19 +320,18 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         return lookup(kind, name, ns)
 
     edges = {}
-    for ref in references:
+    for original in references:
+        ref = dict(original)
         # A relationship traversal depends on its lookup field as well as the
         # final field. Preserve both without treating them as ambiguous targets.
         intermediate_fields = []
-        if ref["target_kind"] == "FieldPath":
-            field_path(ref["target_name"], ref.get("namespace", ""), intermediate_fields)
+        matches = resolve(ref, intermediate_fields)
         for intermediate in {f["id"]: f for f in intermediate_fields}.values():
             edge = {**ref, "target": intermediate["id"], "relation": "traverses",
                     "resolution": "resolved", "confidence": "INFERRED", "weight": 1.0,
                     "_origin": "salesforce"}
             key = hashlib.sha256(json.dumps(edge, sort_keys=True).encode()).hexdigest()[:32]
             edges[key] = {"id": key, **edge}
-        matches = resolve(ref)
         matches = list({m["id"]: m for m in matches}.values())
         resolution = "resolved" if len(matches) == 1 else "ambiguous" if matches else "unresolved"
         if len(matches) == 1:
@@ -301,7 +339,8 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         else:
             kind = ref["target_kind"]
             name = ref["target_name"]
-            target = node_id("UnresolvedReference", f"{ref.get('namespace', '')}:{kind}:{name}")
+            context = ref.get("report_type", "") + ":" if kind == "ReportColumn" else ""
+            target = node_id("UnresolvedReference", f"{ref.get('namespace', '')}:{kind}:{context}{name}")
             nodes.setdefault(target, {
                 "id": target, "kind": kind, "name": name, "label": name,
                 "external": True, "resolution": resolution,

@@ -52,6 +52,77 @@ def test_colliding_verified_folder_aliases_remain_ambiguous():
     assert next(e for e in graph["edges"] if e["target_kind"] == "Report")["resolution"] == "ambiguous"
 
 
+def report_type(name, columns, canonical=None):
+    from urllib.parse import quote
+    body = json.dumps({"reportMetadata": {"reportType": {"type": name}},
+                       "reportTypeMetadata": {"categories": [{"columns": columns}]}}, indent=2)
+    return source("ReportType", canonical or name, body, f"salesforce-api/reportTypes/{quote(name, safe='')}/describe.json", source_kind="api")
+
+
+def test_reports_resolve_scoped_column_aliases_with_secondary_api_provenance():
+    sources = [*schema(),
+        report_type("Scored__c", {"SCORE": {"entityColumnName": "Account.Score__c"}, "Unused": {"entityColumnName": "Account.Name"}, "RowCount": {"entityColumnName": "CDF1"}}, canonical="Scored"),
+        source("Report", "Sales/Scored", "<Report>\n<reportType>Scored__c</reportType>\n<columns><field>SCORE</field></columns>\n</Report>")]
+    graph = build_graph(sources, include_facts=True)
+    edge = next(e for e in graph["edges"] if e["target_name"] == "SCORE")
+    assert edge["target"] == node_id("CustomField", "Account.Score__c") and edge["line"] == 3
+    assert edge["binding_evidence"][0]["source_file"].endswith("Scored__c/describe.json")
+    assert edge["binding_evidence"][0]["source_sha"] and edge["binding_evidence"][0]["line"] > 1
+    assert not any(e["source"] == node_id("ReportType", "Scored") for e in graph["edges"])
+    assert not any("binding_evidence" in ref for fact in graph["facts"].values() for ref in fact["references"])
+    without_mapping = build_graph([sources[0], sources[-1]], previous_facts=graph["facts"])
+    missing = next(e for e in without_mapping["edges"] if e["target_name"] == "SCORE")
+    assert missing["resolution"] == "unresolved" and "binding_evidence" not in missing
+
+
+def test_report_column_dollar_aliases_use_verified_lookup_paths_and_no_label_guessing():
+    graph = build_graph([*schema(), report_type("AccountType", {"FK_Account.Score__c": {
+        "fullyQualifiedName": "Account.Parent__c.Score__c", "entityColumnName": "FK_Account.Score__c"}}),
+        source("Report", "R", "<Report><reportType>AccountType</reportType><columns><field>FK_$Account.Score__c</field></columns><columns><field>Score</field></columns></Report>")])
+    assert ("R", "Account.Score__c") in edges(graph, "references_field")
+    assert ("R", "Account.Parent__c") in edges(graph, "traverses")
+    assert next(e for e in graph["edges"] if e["target_name"] == "Score")["resolution"] == "unresolved"
+
+
+def test_report_alias_conflicts_are_ambiguous_and_wrong_type_mappings_are_not_used():
+    graph = build_graph([*schema(), report_type("One", {"SCORE": {"entityColumnName": "Account.Score__c"}, "score": {"entityColumnName": "Account.Name"}}),
+        report_type("Other", {"NOT_IN_ONE": {"entityColumnName": "Account.Score__c"}}),
+        source("Report", "R", "<Report><reportType>One</reportType><columns><field>SCORE</field></columns><columns><field>NOT_IN_ONE</field></columns></Report>")])
+    assert next(e for e in graph["edges"] if e["target_name"] == "SCORE")["resolution"] == "ambiguous"
+    assert next(e for e in graph["edges"] if e["target_name"] == "NOT_IN_ONE")["resolution"] == "unresolved"
+
+
+def test_report_type_describe_rejects_identity_mismatch_without_declaring_fields():
+    captured = report_type("Wrong", {"SCORE": {"entityColumnName": "Account.Score__c"}}, canonical="Expected")
+    graph = build_graph([captured])
+    assert graph["coverage"][0]["level"] == "partial"
+    assert graph["diagnostics"][0]["code"] == "report_type_describe_identity_mismatch"
+    assert not any(n["kind"] == "CustomField" for n in graph["nodes"])
+
+
+def test_report_type_failed_checks_remain_partial_and_can_recover_with_reused_facts():
+    typed = report_type("AccountType", {"SCORE": {"entityColumnName": "Account.Score__c"}})
+    def status(state):
+        return source("ReportType", "AccountType", json.dumps({"type": "AccountType", "status": state}),
+                      "salesforce-api/reportTypes/AccountType/status.json", source_kind="api")
+    sources = [*schema(), typed, source("Report", "R", "<Report><reportType>AccountType</reportType><columns><field>SCORE</field></columns></Report>")]
+    graph = build_graph([*sources, status("inaccessible")], include_facts=True)
+    assert next(n for n in graph["nodes"] if n["kind"] == "ReportType")["coverage"] == "partial"
+    assert any(d["code"] == "report_type_describe_inaccessible" for d in graph["diagnostics"])
+    edge = next(e for e in graph["edges"] if e["target_name"] == "SCORE")
+    assert edge["binding_evidence"][0]["status"] == "inaccessible"
+    recovered = build_graph([*sources, status("complete")], previous_facts=graph["facts"])
+    assert recovered["stats"]["reused"] == 3
+    assert next(n for n in recovered["nodes"] if n["kind"] == "ReportType")["coverage"] == "semantic"
+    assert next(e for e in recovered["edges"] if e["target_name"] == "SCORE")["binding_evidence"][0]["status"] == "complete"
+
+
+def test_unresolved_report_aliases_keep_their_report_type_scope():
+    graph = build_graph([source("Report", type, f"<Report><reportType>{type}</reportType><columns><field>NAME</field></columns></Report>") for type in ("One", "Two")])
+    edges_to_name = [e for e in graph["edges"] if e["target_name"] == "NAME"]
+    assert len({e["target"] for e in edges_to_name}) == 2
+
+
 def test_apex_syntax_and_field_resolution_ignore_comments_and_strings():
     code = """public class Scorer {
       // Ghost.run(); update ghosts; [SELECT Hidden FROM Missing]

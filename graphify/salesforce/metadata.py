@@ -206,6 +206,8 @@ def parse_metadata(facts: Facts) -> None:
         parent_object = typ if typ.endswith("__mdt") else typ + "__mdt"
     if src.metadata_type == "EmailTemplate" and root.value("relatedEntityType"):
         facts.nodes[src.component_id]["related_object"] = root.value("relatedEntityType")
+    if src.metadata_type == "Report":
+        facts.nodes[src.component_id]["report_type"] = root.value("reportType")
     variables = {}
     if src.metadata_type == "FlexiPage" and parent_object:
         variables["Record"] = parent_object
@@ -254,11 +256,12 @@ def parse_metadata(facts: Facts) -> None:
             if n.tag == "fieldItem" and text.startswith("Record."):
                 text = text.removeprefix("Record.")
             if src.metadata_type == "Report":
-                text = text.replace("$", ".")
+                facts.ref(owner, "ReportColumn", text.replace("$", "."), "references_field", n.line,
+                          report_column=text)
             name = text if "." in text or not obj else obj + "." + text
             if src.metadata_type == "ReportType" and obj and not text.casefold().startswith(obj.casefold() + "."):
                 name = obj + "." + text
-            if "." in name:
+            if "." in name and src.metadata_type != "Report":
                 relation = "writes" if parent and parent.tag in {"inputAssignments", "fieldUpdates"} else "references_field"
                 facts.ref(owner, "FieldPath", name, relation, n.line,
                           **({"context_object": parent_object} if src.metadata_type == "ReportType" else {}))
