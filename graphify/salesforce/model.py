@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-2"
+ENGINE_VERSION = "salesforce-3"
 
 
 def node_id(kind: str, name: str) -> str:
@@ -23,6 +23,9 @@ class Source:
     full_name: str
     namespace: str = ""
     source_kind: str = "source"
+    # Trusted storage may supply the already-verified content hash when an
+    # unchanged source body is omitted and its existing facts will be reused.
+    content_sha: str | None = None
 
     @property
     def component_id(self) -> str:
@@ -31,7 +34,7 @@ class Source:
     @property
     def fingerprint(self) -> str:
         return hashlib.sha256(json.dumps(
-            [ENGINE_VERSION, self.path, self.content, self.metadata_type,
+            [ENGINE_VERSION, self.path, self.content_sha or hashlib.sha256(self.content.encode()).hexdigest(), self.metadata_type,
              self.full_name, self.namespace, self.source_kind],
             ensure_ascii=False, separators=(",", ":"),
         ).encode()).hexdigest()

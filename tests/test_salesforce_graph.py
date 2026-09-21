@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 import pytest
 
@@ -97,10 +98,93 @@ def test_dynamic_queries_are_reported_constant_queries_are_parsed():
     assert any(d["code"] == "dynamic_query_unresolved" for d in graph["diagnostics"])
 
 
+def test_constant_query_concatenation_and_reflection_keep_real_source_hash():
+    code = """class Queries {
+      static final String FIELD = 'Name';
+      void run() {
+        String q = 'SELECT ' + FIELD + ' FROM Account';
+        q += ' LIMIT 1';
+        Database.query(q);
+        String typeName = 'Tar' + 'get'; Type.forName(typeName);
+      }
+    }"""
+    graph = build_graph([*schema(), source("ApexClass", "Queries", code), source("ApexClass", "Target", "class Target {}")])
+    assert ("Queries.run()", "Account.Name") in edges(graph, "reads")
+    assert ("Queries.run()", "Target") in edges(graph, "reflects")
+    import hashlib
+    query_edges = [e for e in graph["edges"] if e["relation"] == "queries"]
+    assert query_edges and all(e["source_sha"] == hashlib.sha256(code.encode()).hexdigest() for e in query_edges)
+    assert not any(d["code"].startswith("dynamic_") for d in graph["diagnostics"])
+
+
+@pytest.mark.parametrize("mutation", ["q = fragment;", "if (flag) { q = fragment; }", "{ q = fragment; }", "while (flag) { q = fragment; }"])
+def test_runtime_query_mutations_never_reuse_an_obsolete_constant(mutation):
+    code = "class Queries { void run(String fragment, Boolean flag) { String q = 'SELECT Name FROM Account'; " + mutation + " Database.query(q); } }"
+    graph = build_graph([*schema(), source("ApexClass", "Queries", code)])
+    assert not edges(graph, "queries")
+    assert any(d["code"] == "dynamic_query_unresolved" for d in graph["diagnostics"])
+
+
+def test_mutable_class_query_field_is_not_a_compile_time_constant():
+    graph = build_graph([*schema(), source("ApexClass", "Queries", "class Queries { String q = 'SELECT Name FROM Account'; void run(){ Database.query(q); } }")])
+    assert not edges(graph, "queries")
+    assert any(d["code"] == "dynamic_query_unresolved" for d in graph["diagnostics"])
+
+
 def test_generic_metadata_keeps_node_and_reports_coverage():
     graph = build_graph([source("NewSalesforceType", "Whatever", "<NewSalesforceType><thing>value</thing></NewSalesforceType>")])
     assert graph["coverage"][0]["level"] == "structural"
     assert graph["nodes"][0]["id"] == node_id("NewSalesforceType", "Whatever")
+
+
+@pytest.mark.parametrize("kind", ["ApexClass", "ApexTrigger", "ApexPage", "ApexComponent"])
+def test_salesforce_hidden_body_is_availability_not_a_syntax_error(kind):
+    graph = build_graph([source(kind, "PackageCode", "(hidden)")])
+    assert graph["coverage"][0]["level"] == "catalog"
+    assert graph["diagnostics"][0]["code"] == "source_hidden_by_salesforce"
+    assert graph["edges"] == []
+
+
+def test_bundle_coverage_is_not_determined_by_css_sorting_first():
+    graph = build_graph([
+        source("LightningComponentBundle", "card", ".card {}", "lwc/card/card.css"),
+        source("LightningComponentBundle", "card", "import x from '@salesforce/schema/Account.Name';", "lwc/card/card.js"),
+    ])
+    node = next(n for n in graph["nodes"] if n["id"] == node_id("LightningComponentBundle", "card"))
+    assert node["coverage"] == "semantic"
+
+
+def describe_source(name, fields, children=None):
+    return source("CustomObject", name, json.dumps({"name": name, "fields": fields,
+        "childRelationships": children or []}, indent=2), f"salesforce-api/sobjects/{name}/describe.json", source_kind="api")
+
+
+def test_real_describe_binds_standard_parent_and_child_relationships():
+    graph = build_graph([
+        describe_source("Account", [{"name": "Name", "type": "string"}],
+                        [{"relationshipName": "Contacts", "childSObject": "Contact", "field": "AccountId"}]),
+        describe_source("Contact", [{"name": "Name", "type": "string"},
+                        {"name": "AccountId", "type": "reference", "relationshipName": "Account", "referenceTo": ["Account"]}]),
+        source("ReportType", "Contacts", "<ReportType><baseObject>Account</baseObject><sections><columns><table>Account.Contacts</table><field>Account.Name</field></columns></sections></ReportType>"),
+        source("Report", "Folder/Names", "<Report><reportType>Contacts__c</reportType><columns><field>Account.Contacts$Name</field></columns></Report>"),
+    ])
+    assert ("Contacts", "Account.Name") in edges(graph)
+    assert ("Folder/Names", "Contact.Name") in edges(graph)
+    assert ("Folder/Names", "Contacts") in edges(graph)
+    assert all(e["source_sha"] for e in graph["edges"])
+
+
+def test_describe_never_invents_field_names_and_rejects_wrong_identity():
+    graph = build_graph([describe_source("Contact", [{"name": "AccountId", "relationshipName": "Account", "referenceTo": ["Account"]}])])
+    assert not any(n["name"] == "Contact.Account" for n in graph["nodes"])
+    bad = source("CustomObject", "Account", '{"name":"Contact","fields":[]}', "salesforce-api/sobjects/Account/describe.json")
+    assert build_graph([bad])["diagnostics"][0]["code"] == "describe_identity_mismatch"
+
+
+def test_flexipage_record_merge_scope_uses_its_declared_object():
+    graph = build_graph([*schema(), source("FlexiPage", "Card", "<FlexiPage><sobjectType>Account</sobjectType><value>{!Record.Score__c}</value></FlexiPage>")])
+    assert ("Card", "Account.Score__c") in edges(graph, "reads")
+    assert not any("Account.Record" in n["name"] for n in graph["nodes"])
 
 
 def test_xml_entities_rejected_without_dropping_component():

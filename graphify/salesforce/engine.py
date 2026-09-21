@@ -17,11 +17,20 @@ def extract_facts(source: Source) -> dict:
     if source.source_kind == "catalog":
         facts.level = "catalog"
         facts.issue("source_not_retrieved", metadata_type=source.metadata_type)
+    elif source.metadata_type in {"ApexClass", "ApexTrigger", "ApexPage", "ApexComponent"} and source.content.strip() == "(hidden)":
+        # Tooling returns this literal for inaccessible managed code. It is
+        # an availability signal, not malformed Apex/XML or an empty program.
+        facts.level = "catalog"
+        facts.nodes[source.component_id]["source_kind"] = "hidden"
+        facts.issue("source_hidden_by_salesforce", metadata_type=source.metadata_type)
     elif source.source_kind == "binary":
         facts.issue("binary_content_not_parsed", metadata_type=source.metadata_type)
     elif len(source.content.encode()) > MAX_SOURCE_BYTES:
         facts.level = "unparsed"
         facts.issue("source_size_limit", max_bytes=MAX_SOURCE_BYTES)
+    elif source.path.startswith("salesforce-api/sobjects/") and source.path.endswith("/describe.json"):
+        from .schema import parse_describe
+        parse_describe(facts)
     elif source.path.endswith((".cls", ".trigger", ".soql", ".sosl")):
         from .apex import parse_apex
         parse_apex(facts)
@@ -78,9 +87,16 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 if node["source_file"] not in existing["source_files"]:
                     existing["source_files"].append(node["source_file"])
                 for k in ("reference_to", "relationship_name", "data_type", "annotations",
-                          "related_object", "recipient_object", "is_test"):
+                          "related_object", "recipient_object", "is_test", "child_relationships",
+                          "parent_relationship_name"):
                     if node.get(k):
                         existing[k] = node[k]
+                # CSS/sidecars can sort before the semantic file in a bundle.
+                # Keep any partial/unparsed warning, otherwise the best parser
+                # actually used for that component determines its coverage.
+                rank = {"catalog": 0, "structural": 1, "semantic": 2, "partial": 3, "unparsed": 4}
+                if rank.get(node.get("coverage"), 0) > rank.get(existing.get("coverage"), 0):
+                    existing["coverage"] = node["coverage"]
         references.extend(fact["references"])
         diagnostics.extend(fact["diagnostics"])
         coverage.append(fact["coverage"])
@@ -98,6 +114,9 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         if kind == "Type":
             kinds = ["ApexClass", "ApexInterface", "ApexEnum", "CustomObject"]
         names = [name]
+        if kind in {"ApexClass", "ApexTrigger"} and "__" in name:
+            # Metadata XML uses namespace__Class while Apex uses namespace.Class.
+            names.insert(0, name.replace("__", ".", 1))
         if namespace and not name.startswith(namespace + "."):
             names.insert(0, namespace + "." + name)
             if kind in {"CustomObject", "CustomField", "CustomPermission", "Type"}:
@@ -121,7 +140,14 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
     # Scanning every field for each segment made binding quadratic (over 100M
     # dict reads in the live corpus). Build the reverse schema index once.
     child_relationships: dict[tuple[str, str], set[str]] = {}
+    parent_relationships: dict[tuple[str, str], list[dict]] = {}
+    for node in nodes.values():
+        for relationship in node.get("child_relationships", []):
+            child_relationships.setdefault((node["name"].casefold(), relationship["relationshipName"].casefold()), set()).add(relationship["childSObject"])
     for f in fields:
+        parent_name = f.get("parent_relationship_name", "").casefold()
+        if parent_name:
+            parent_relationships.setdefault((f["name"].split(".")[0].casefold(), parent_name), []).append(f)
         relationship = f.get("relationship_name", "").casefold()
         if not relationship:
             continue
@@ -145,9 +171,14 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
             matched = []
             for obj in objects:
                 exact = lookup("CustomField", obj + "." + part, namespace)
+                described = parent_relationships.get((obj.casefold(), part.casefold()), [])
                 if last:
-                    matched.extend(exact)
+                    matched.extend(exact or described)
                     continue
+                for f in described:
+                    next_objects.extend(f.get("reference_to", []))
+                    if intermediates is not None:
+                        intermediates.append(f)
                 names = [part]
                 if part.endswith("__r"):
                     names.append(part[:-3] + "__c")
@@ -209,7 +240,12 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
     def resolve(ref):
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
         if kind == "FieldPath":
-            return field_path(name, ns)
+            found = field_path(name, ns)
+            if not found and ref.get("context_object") and not lookup("CustomObject", name.split(".")[0], ns):
+                found = field_path(ref["context_object"] + "." + name, ns)
+            return found
+        if kind == "ReportType" and name.endswith("__c"):
+            return lookup(kind, name, ns) or lookup(kind, name[:-3], ns)
         if kind == "TemplateField":
             alias, _, path = name.partition(".")
             component = nodes.get(ref["source"], {})

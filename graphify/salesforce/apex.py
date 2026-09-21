@@ -10,6 +10,8 @@ BUILTINS = {x.casefold() for x in (
     "List Set Map SObject System Database Schema Trigger Test Math Type JSON Http "
     "HttpRequest HttpResponse PageReference Exception Savepoint Iterator Iterable "
     "Queueable QueueableContext Schedulable SchedulableContext Batchable BatchableContext"
+    " AggregateResult QueryLocator SaveResult DeleteResult UpsertResult RecordTypeInfo "
+    "RestRequest RestResponse RestContext ApexPages Messaging LoggingLevel Comparable"
 ).split()}
 DECLARATIONS = {"class_declaration": "ApexClass", "interface_declaration": "ApexInterface",
                 "enum_declaration": "ApexEnum", "trigger_declaration": "ApexTrigger"}
@@ -123,7 +125,32 @@ def parse_apex(facts: Facts) -> None:
                 visit(child)
         visit(n)
 
-    def visit(n, owner, class_name, variables, trigger_object=""):
+    def constant_string(n, constants, depth=0):
+        if not n or depth > 20:
+            return None
+        if n.type == "string_literal":
+            value = text(n)[1:-1]
+            escapes = {"n": "\n", "r": "\r", "t": "\t", "b": "\b", "f": "\f", "\\": "\\", "'": "'", '"': '"'}
+            return re.sub(r"\\(u[0-9a-fA-F]{4}|.)", lambda m: chr(int(m[1][1:], 16)) if m[1].startswith("u") else escapes.get(m[1], m[0]), value)
+        if n.type == "identifier":
+            return constants.get(text(n).casefold())
+        if n.type == "parenthesized_expression" and len(n.named_children) == 1:
+            return constant_string(n.named_children[0], constants, depth + 1)
+        if n.type == "binary_expression":
+            left, right = field(n, "left"), field(n, "right")
+            if left and right and code[left.end_byte:right.start_byte].strip() == b"+":
+                a, b = constant_string(left, constants, depth + 1), constant_string(right, constants, depth + 1)
+                if a is not None and b is not None and len(a) + len(b) <= 65536:
+                    return a + b
+        return None
+
+    def assigned_names(n):
+        return {text(field(child, "left") if child.type == "assignment_expression" else field(child, "name")).casefold()
+                for child in walk(n) if child.type in {"assignment_expression", "variable_declarator"}}
+
+    def visit(n, owner, class_name, variables, trigger_object="", constants=None):
+        if constants is None:
+            constants = {}
         kind = n.type
         if kind in DECLARATIONS and not standalone:
             name = text(field(n, "name"))
@@ -149,7 +176,8 @@ def parse_apex(facts: Facts) -> None:
                 if clause:
                     for t in walk(clause):
                         if t.type == "type_identifier":
-                            facts.ref(nid, "Type", text(t), relation, line(t))
+                            if text(t).casefold() not in BUILTINS:
+                                facts.ref(nid, "Type", text(t), relation, line(t))
                             if relation == "extends":
                                 inherited["__super"] = text(t)
             obj = text(field(n, "object")) or trigger_object
@@ -158,6 +186,7 @@ def parse_apex(facts: Facts) -> None:
                 facts.ref(nid, "CustomObject", obj, "triggers_on", line(n), events=events)
             body = field(n, "body")
             if body:
+                class_constants = {}
                 # Class fields may be declared below methods that use them.
                 for child in body.named_children:
                     if child.type == "field_declaration":
@@ -165,7 +194,11 @@ def parse_apex(facts: Facts) -> None:
                         for decl in child.named_children:
                             if decl.type == "variable_declarator":
                                 inherited[text(field(decl, "name")).casefold()] = typ
-                visit(body, nid, full, inherited, obj)
+                                if "final" in text(next((c for c in child.named_children if c.type == "modifiers"), None)).casefold().split():
+                                    value = constant_string(field(decl, "value"), class_constants)
+                                    if value is not None:
+                                        class_constants[text(field(decl, "name")).casefold()] = value
+                visit(body, nid, full, inherited, obj, class_constants)
             return
         if kind in {"method_declaration", "constructor_declaration"} and not standalone:
             name = text(field(n, "name"))
@@ -182,12 +215,14 @@ def parse_apex(facts: Facts) -> None:
                                 parameters=param_types, return_type=text(field(n, "type")))
             facts.ref(owner, "ApexMethod", full, "method", line(n))
             scoped = dict(variables)
+            scoped_constants = dict(constants)
             for p in params:
                 scoped[text(field(p, "name")).casefold()] = type_name(field(p, "type"))
                 type_refs(field(p, "type"), nid)
+                scoped_constants.pop(text(field(p, "name")).casefold(), None)
             type_refs(field(n, "type"), nid)
             for child in n.named_children:
-                visit(child, nid, class_name, scoped, trigger_object)
+                visit(child, nid, class_name, scoped, trigger_object, scoped_constants)
             return
         if kind in {"local_variable_declaration", "field_declaration", "formal_parameter", "enhanced_for_statement"}:
             typ = type_name(field(n, "type"))
@@ -198,6 +233,26 @@ def parse_apex(facts: Facts) -> None:
             for child in n.named_children:
                 if child.type == "variable_declarator":
                     variables[text(field(child, "name")).casefold()] = typ
+                    value = constant_string(field(child, "value"), constants)
+                    if kind == "field_declaration" and "final" not in text(next((c for c in n.named_children if c.type == "modifiers"), None)).casefold().split():
+                        value = None  # Mutable fields can change between calls.
+                    key = text(field(child, "name")).casefold()
+                    if value is None:
+                        constants.pop(key, None)
+                    else:
+                        constants[key] = value
+        if kind == "assignment_expression" and field(n, "left") and field(n, "left").type == "identifier":
+            key = text(field(n, "left")).casefold()
+            value = constant_string(field(n, "right"), constants)
+            operator = text(field(n, "operator"))
+            if operator == "+=" and value is not None and key in constants:
+                value = constants[key] + value
+            elif operator != "=":
+                value = None
+            if value is None or len(value) > 65536:
+                constants.pop(key, None)
+            else:
+                constants[key] = value
         if kind in {"soql_query_body", "sosl_query_body"}:
             query(n, owner)
             return
@@ -213,8 +268,8 @@ def parse_apex(facts: Facts) -> None:
             args_node = field(n, "arguments")
             args = list(args_node.named_children) if args_node else []
             if obj.casefold() == "database" and method.casefold() in {"query", "countquery", "getquerylocator", "querywithbinds", "countquerywithbinds", "getquerylocatorwithbinds"}:
-                if args and args[0].type == "string_literal":
-                    literal = text(args[0])[1:-1].replace("\\'", "'")
+                literal = constant_string(args[0], constants) if args else None
+                if literal is not None:
                     wrapped = ("class Q {void q(){Object v=[" + literal + "];}}").encode()
                     dynamic_tree = get_parser("apex").parse(wrapped)
                     if not dynamic_tree.root_node.has_error:
@@ -224,7 +279,7 @@ def parse_apex(facts: Facts) -> None:
                         other = Facts(Source(src.path, literal, "SOQL", src.full_name))
                         parse_apex(other)
                         for ref in other.references:
-                            ref.update(source=owner, line=line(n), source_location=f"L{line(n)}")
+                            ref.update(source=owner, line=line(n), source_location=f"L{line(n)}", source_sha=facts.source_sha, source_file=src.path)
                             facts.references.append(ref)
                     else:
                         facts.level = "partial"
@@ -237,10 +292,11 @@ def parse_apex(facts: Facts) -> None:
                 if target:
                     facts.ref(owner, "CustomObject", target, "writes", line(n), operation=method.casefold())
             elif obj.casefold() == "type" and method.casefold() == "forname":
-                if args and args[-1].type == "string_literal":
-                    name = text(args[-1])[1:-1]
-                    if len(args) > 1 and args[0].type == "string_literal":
-                        name = text(args[0])[1:-1] + "." + name
+                name = constant_string(args[-1], constants) if args else None
+                namespace = constant_string(args[0], constants) if len(args) > 1 else ""
+                if name is not None and namespace is not None:
+                    if namespace:
+                        name = namespace + "." + name
                     facts.ref(owner, "ApexClass", name, "reflects", line(n))
                 else:
                     facts.level = "partial"
@@ -276,9 +332,16 @@ def parse_apex(facts: Facts) -> None:
             elif receiver and receiver.casefold() not in BUILTINS:
                 relation = "writes" if n.parent and n.parent.type == "assignment_expression" and field(n.parent, "left") == n else "reads"
                 facts.ref(owner, "FieldPath", receiver + "." + member, relation, line(n))
+        # Branches/loops/nested blocks can mutate an outer variable. Do not
+        # carry a guessed branch value into a later query. No Apex is executed.
+        control = kind in {"if_statement", "for_statement", "enhanced_for_statement", "while_statement", "do_statement", "switch_expression", "try_statement"}
+        if control or (kind == "block" and n.parent and n.parent.type not in {"method_declaration", "constructor_declaration"}):
+            for name in assigned_names(n):
+                constants.pop(name, None)
+            constants = dict(constants)
         if kind in {"block", "enhanced_for_statement"}:
             variables = dict(variables)
         for child in n.named_children:
-            visit(child, owner, class_name, variables, trigger_object)
+            visit(child, owner, class_name, variables, trigger_object, dict(constants) if control else constants)
 
     visit(tree.root_node, src.component_id, "", {})

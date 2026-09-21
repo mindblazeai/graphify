@@ -199,12 +199,16 @@ def parse_metadata(facts: Facts) -> None:
         parent_object = root.value("targetObject") or (src.full_name.split(".")[0] if "." in src.full_name else "")
     elif src.metadata_type == "ReportType":
         parent_object = root.value("baseObject")
+    elif src.metadata_type == "FlexiPage":
+        parent_object = root.value("sobjectType")
     elif src.metadata_type == "CustomMetadata":
         typ = src.full_name.split(".", 1)[0]
         parent_object = typ if typ.endswith("__mdt") else typ + "__mdt"
     if src.metadata_type == "EmailTemplate" and root.value("relatedEntityType"):
         facts.nodes[src.component_id]["related_object"] = root.value("relatedEntityType")
     variables = {}
+    if src.metadata_type == "FlexiPage" and parent_object:
+        variables["Record"] = parent_object
     for child in root.children:
         obj = child.value("object") or child.value("objectType")
         if child.tag == "start" and obj:
@@ -249,10 +253,15 @@ def parse_metadata(facts: Facts) -> None:
         if n.tag in FIELD_TAGS and text and not n.children:
             if n.tag == "fieldItem" and text.startswith("Record."):
                 text = text.removeprefix("Record.")
+            if src.metadata_type == "Report":
+                text = text.replace("$", ".")
             name = text if "." in text or not obj else obj + "." + text
+            if src.metadata_type == "ReportType" and obj and not text.casefold().startswith(obj.casefold() + "."):
+                name = obj + "." + text
             if "." in name:
                 relation = "writes" if parent and parent.tag in {"inputAssignments", "fieldUpdates"} else "references_field"
-                facts.ref(owner, "FieldPath", name, relation, n.line)
+                facts.ref(owner, "FieldPath", name, relation, n.line,
+                          **({"context_object": parent_object} if src.metadata_type == "ReportType" else {}))
         if n.tag in TYPE_REFERENCES and text and not n.children:
             typ = TYPE_REFERENCES[n.tag]
             name = text
