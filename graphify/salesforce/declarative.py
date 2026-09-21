@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .model import Facts
+from .experience import SHAPES as EXPERIENCE_SHAPES, parse_experience, shape_path, site_reference
 
 if TYPE_CHECKING:
     from .metadata import Element
@@ -51,6 +52,7 @@ SHAPES = {
         "entitiesAndFields": "entityName fieldName keywordList",
     },
 }
+SHAPES.update(EXPERIENCE_SHAPES)
 SHAPES = {kind: {path: frozenset(tags.split()) | ({"fullName"} if not path else set())
                  for path, tags in shape.items()} for kind, shape in SHAPES.items()}
 
@@ -71,7 +73,7 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
     unknown = set()
 
     def validate(n, path=""):
-        allowed = SHAPES[kind].get(path, ())
+        allowed = SHAPES[kind].get(shape_path(kind, path), ())
         for child in n.children:
             child_path = path + "/" + child.tag if path else child.tag
             if child.tag not in allowed:
@@ -127,7 +129,10 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
         else:
             issue("metadata_reference_context_missing", n, property=n.tag)
 
-    if kind == "PathAssistant":
+    if kind in EXPERIENCE_SHAPES:
+        parse_experience(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind == "PathAssistant":
         obj = object_context(root, "entityName")
         field_ref(scalar(root, "fieldName", required=True), obj)
         record_type(scalar(root, "recordTypeName", required=True), obj)
@@ -235,7 +240,4 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
             }:
                 # Explicit API-only field names are not aliases for Body.
                 issue("moderation_metadata_only_field", item)
-        if "." in facts.source.full_name:
-            # The filename's site name cannot be guessed to be a CustomSite or
-            # Network identity; that needs a verified site/network mapping.
-            issue("moderation_site_binding_unresolved")
+        site_reference(facts, root, issue=issue, ref=ref)

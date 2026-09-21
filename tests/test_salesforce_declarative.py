@@ -196,7 +196,9 @@ def test_moderation_declared_fields_and_criteria_keep_api_only_field_gap_explici
       catalog("CustomField", "FeedComment.CommentBody"), catalog("UserCriteria", "Site.NewMembers"), catalog("KeywordList", "Site.Words")])
     assert {e["target_name"] for e in refs(g, "FieldPath")} == {"FeedItem.RawBody", "FeedComment.CommentBody"}
     assert next(e for e in refs(g, "FieldPath") if e["target_name"] == "FeedItem.RawBody")["resolution"] == "unresolved"
-    assert codes(g) >= {"moderation_metadata_only_field", "moderation_site_binding_unresolved"}
+    assert "moderation_metadata_only_field" in codes(g)
+    assert refs(g, "Network")[0]["target_name"] == "Site"
+    assert refs(g, "Network")[0]["resolution"] == "unresolved"
 
 
 @pytest.mark.parametrize("kind", sorted(SHAPES))

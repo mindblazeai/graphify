@@ -271,8 +271,12 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         if "target_salesforce_id" in ref:
             # Never fall back to a display name or ID prefix. These declarations
             # were independently supplied in the same scoped source inventory.
-            return [n for n in by_salesforce_id.get(salesforce_id(ref["target_salesforce_id"]), [])
-                    if kind == "SalesforceMetadataId" or n["kind"] == kind]
+            matches = [n for n in by_salesforce_id.get(salesforce_id(ref["target_salesforce_id"]), [])
+                       if kind == "SalesforceMetadataId" or n["kind"] == kind]
+            if ref.get("target_object"):
+                objects = {n["name"].casefold() for n in lookup("CustomObject", ref["target_object"], ns)}
+                matches = [n for n in matches if n["name"].rsplit(".", 1)[0].casefold() in objects]
+            return matches
         if kind == "ReportColumn":
             report = nodes.get(ref["source"], {})
             type_name = report.get("report_type", "")
