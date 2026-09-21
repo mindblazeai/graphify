@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-1"
+ENGINE_VERSION = "salesforce-2"
 
 
 def node_id(kind: str, name: str) -> str:
@@ -42,6 +42,7 @@ class Facts:
 
     def __init__(self, source: Source):
         self.source = source
+        self.source_sha = hashlib.sha256(source.content.encode()).hexdigest()
         self.nodes: dict[str, dict] = {}
         self.references: list[dict] = []
         self.diagnostics: list[dict] = []
@@ -58,6 +59,7 @@ class Facts:
             "full_name": self.source.full_name,
             "namespace": self.source.namespace,
             "source_file": self.source.path, "source_location": f"L{line}",
+            "source_sha": self.source_sha,
             "line": line, "file_type": "code", "external": False,
             **attributes,
         }
@@ -70,6 +72,7 @@ class Facts:
         self.references.append({
             "source": source_id, "target_kind": kind, "target_name": name,
             "relation": relation, "source_file": self.source.path,
+            "source_sha": self.source_sha,
             "source_location": f"L{line}", "line": line,
             "namespace": self.source.namespace, **attributes,
         })
@@ -79,6 +82,8 @@ class Facts:
                                  "line": line, **details})
 
     def result(self) -> dict:
+        for node in self.nodes.values():
+            node["coverage"] = self.level
         return {"fingerprint": self.source.fingerprint,
                 "nodes": list(self.nodes.values()), "references": self.references,
                 "diagnostics": self.diagnostics,

@@ -4,7 +4,7 @@ import re
 from html.parser import HTMLParser
 
 from .apex import walk
-from .metadata import expression_refs
+from .metadata import merge_refs
 from .model import Facts
 
 
@@ -90,9 +90,33 @@ def parse_markup(facts: Facts) -> None:
     owner = facts.source.component_id
 
     class MarkupParser(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.object_name = ""
+            self.variables = {}
+            self.scopes = []
+
         def handle_starttag(self, tag, attrs):
             line = self.getpos()[0]
             attributes = dict(attrs)
+            self.scopes.append((tag, dict(self.variables), self.object_name))
+            if tag == "messaging:emailtemplate":
+                for attribute, alias, property_name in (
+                    ("relatedtotype", "relatedTo", "related_object"),
+                    ("recipienttype", "recipient", "recipient_object"),
+                ):
+                    obj = attributes.get(attribute)
+                    if obj:
+                        self.variables[alias] = obj
+                        facts.nodes[owner][property_name] = obj
+                        facts.ref(owner, "CustomObject", obj, "references_object", line)
+            if tag in {"apex:repeat", "apex:datatable", "apex:pageblocktable"}:
+                value = re.fullmatch(r"\{!\s*([\w.]+)\s*\}", attributes.get("value") or "")
+                variable = attributes.get("var")
+                if value and variable:
+                    root, sep, path = value[1].partition(".")
+                    base = next((v for k, v in self.variables.items() if k.casefold() == root.casefold()), root)
+                    self.variables[variable] = base + (sep + path if sep else "")
             controller = attributes.get("controller")
             if controller:
                 facts.ref(owner, "ApexClass", controller, "controller", line)
@@ -119,17 +143,24 @@ def parse_markup(facts: Facts) -> None:
                         # Markup c.foo references a JS controller method, not
                         # necessarily the Apex action of the same name.
                         facts.ref(owner, "AuraClientMethod", facts.source.full_name + "." + expr[2:], "handles", line)
-                    else:
-                        expression_refs(facts, owner, expr, getattr(self, "object_name", ""), line)
+                merge_refs(facts, owner, value, self.object_name, line, self.variables)
 
-        handle_startendtag = handle_starttag
+        def handle_endtag(self, tag):
+            for i in range(len(self.scopes) - 1, -1, -1):
+                if self.scopes[i][0] == tag:
+                    _, self.variables, self.object_name = self.scopes[i]
+                    del self.scopes[i:]
+                    break
+
+        def handle_startendtag(self, tag, attrs):
+            self.handle_starttag(tag, attrs)
+            self.handle_endtag(tag)
 
         def handle_data(self, data):
-            for expr in re.findall(r"\{[!#]([^}]+)\}", data):
-                expression_refs(facts, owner, expr, getattr(self, "object_name", ""), self.getpos()[0])
+            merge_refs(facts, owner, data, self.object_name, self.getpos()[0], self.variables)
 
     try:
-        MarkupParser(convert_charrefs=True).feed(facts.source.content)
+        MarkupParser().feed(facts.source.content)
     except (ValueError, AssertionError):
         facts.level = "partial"
         facts.issue("markup_parse_error")

@@ -62,13 +62,13 @@ FORMULA_CONSTANTS = {"true", "false", "null", "and", "or", "not"}
 
 
 def expression_refs(facts: Facts, owner: str, expression: str, obj: str, line: int,
-                    variables: dict[str, str] | None = None) -> None:
+                    variables: dict[str, str] | None = None, relation: str = "reads") -> None:
     """Tokenize formulas and merge expressions; strings/functions aren't fields.
 
     This extracts dependencies; it does not evaluate Salesforce formulas.
     Binding is deferred to the org schema, including relationship traversal.
     """
-    variables = variables or {}
+    variables = {k.casefold(): v for k, v in (variables or {}).items()}
     for match in EXPRESSION_TOKEN.finditer(expression):
         value = match.group()
         if value[0] in "'\"" or value.casefold() in FORMULA_CONSTANTS:
@@ -76,6 +76,8 @@ def expression_refs(facts: Facts, owner: str, expression: str, obj: str, line: i
         if expression[match.end():].lstrip().startswith("("):
             continue
         bits = value.split(".")
+        if facts.source.metadata_type == "AuraDefinitionBundle" and bits[0] in {"c", "v"}:
+            continue  # Client handlers/attributes are not schema fields.
         if bits[0].casefold() == "$label" and len(bits) > 1:
             label = bits[2:] if len(bits) > 2 and bits[1] == "c" else bits[1:]
             facts.ref(owner, "CustomLabel", ".".join(label), "references", line)
@@ -85,14 +87,32 @@ def expression_refs(facts: Facts, owner: str, expression: str, obj: str, line: i
             facts.ref(owner, "CustomMetadata", bits[1].removesuffix("__mdt") + "." + bits[2], "reads", line)
             if len(bits) > 3:
                 facts.ref(owner, "FieldPath", bits[1] + "." + ".".join(bits[3:]), "reads", line)
-        elif bits[0] in {"$Record", "$Record__Prior"} and len(bits) > 1 and obj:
-            facts.ref(owner, "FieldPath", obj + "." + ".".join(bits[1:]), "reads", line)
-        elif bits[0] in variables and len(bits) > 1:
-            facts.ref(owner, "FieldPath", variables[bits[0]] + "." + ".".join(bits[1:]), "reads", line)
+        elif bits[0].casefold() in {"$record", "$record__prior"} and len(bits) > 1 and obj:
+            facts.ref(owner, "FieldPath", obj + "." + ".".join(bits[1:]), relation, line)
+        elif bits[0].casefold() in variables and len(bits) > 1:
+            facts.ref(owner, "FieldPath", variables[bits[0].casefold()] + "." + ".".join(bits[1:]), relation, line)
+        elif bits[0].casefold() in {"relatedto", "recipient"} and len(bits) > 1:
+            # Bind against the template's declared context after all bundle
+            # files are parsed. Never guess Contact vs Lead vs User.
+            facts.ref(owner, "TemplateField", value, relation, line)
         elif not value.startswith("$") and obj:
-            facts.ref(owner, "FieldPath", value if value.startswith(obj + ".") else obj + "." + value, "reads", line)
+            facts.ref(owner, "FieldPath", value if value.casefold().startswith(obj.casefold() + ".") else obj + "." + value, relation, line)
         elif not value.startswith("$") and len(bits) > 1:
-            facts.ref(owner, "FieldPath", value, "references", line)
+            facts.ref(owner, "FieldPath", value, relation, line)
+
+
+MERGE_EXPRESSION = re.compile(r"\{\{\{?\s*(.*?)\s*\}\}\}?|\{[!#]([^}]+)\}", re.DOTALL)
+
+
+def merge_refs(facts: Facts, owner: str, text: str, obj: str, line: int,
+               variables: dict[str, str] | None = None) -> None:
+    """Only delimited merge expressions, never arbitrary prose or API names."""
+    for match in MERGE_EXPRESSION.finditer(text):
+        expression = match.group(1) if match.group(1) is not None else match.group(2)
+        if expression.startswith(("!", "/")):
+            continue  # Handlebars comment/closing helper.
+        expression_refs(facts, owner, expression, obj,
+                        line + text[:match.start()].count("\n"), variables)
 
 
 FLOW_ELEMENTS = {"start", "actionCalls", "apexPluginCalls", "assignments", "collectionProcessors",
@@ -112,13 +132,18 @@ TYPE_REFERENCES = {
     "platformEvent": "CustomObject", "quickActionName": "QuickAction",
     "componentName": "LightningComponentBundle", "lightningWebComponent": "LightningComponentBundle",
     "lightningComponent": "AuraDefinitionBundle", "contentAsset": "ContentAsset",
+    "letterhead": "Letterhead", "enhancedLetterhead": "EnhancedLetterhead",
+    "matchingRule": "MatchingRule", "matchingRuleName": "MatchingRule",
+    "externalDataSource": "ExternalDataSource", "valueSetName": "GlobalValueSet",
+    "globalValueSet": "GlobalValueSet", "businessProcess": "BusinessProcess",
+    "queue": "Queue", "group": "Group",
 }
 FORMULAS = {"formula", "errorConditionFormula", "criteriaFormula", "booleanFilter", "expression"}
 FIELD_TAGS = {"field", "fields", "fieldName", "displayField", "sortField", "summarizedField",
               "summaryForeignKey", "lookupField", "controllingField",
-              "externalIdField", "relatedField"}
+              "externalIdField", "relatedField", "fieldItem"}
 OBJECT_TAGS = {"object", "objectType", "sObjectType", "sobjectType", "sourceObject",
-               "targetObject", "referenceTo", "relatedObject"}
+               "targetObject", "referenceTo", "relatedObject", "baseObject"}
 SEMANTIC_TYPES = {
     "CustomObject", "CustomField", "ValidationRule", "Flow", "FlowDefinition", "Layout",
     "CompactLayout", "FieldSet", "ListView", "RecordType", "PermissionSet", "Profile",
@@ -142,6 +167,7 @@ CHILD_TAGS = {
     "SharingRules": {"sharingCriteriaRules": "SharingCriteriaRule",
                      "sharingOwnerRules": "SharingOwnerRule", "sharingTerritoryRules": "SharingTerritoryRule"},
     "CustomLabels": {"labels": "CustomLabel"},
+    "MatchingRules": {"matchingRules": "MatchingRule"},
 }
 
 
@@ -162,13 +188,22 @@ def parse_metadata(facts: Facts) -> None:
         facts.issue("profile_retrieve_manifest_limited")
     parent_object = ""
     if src.metadata_type in {"CustomObject", "Workflow", "SharingRules", "AssignmentRules",
-                             "AutoResponseRules", "EscalationRules"}:
+                             "AutoResponseRules", "EscalationRules", "MatchingRules"}:
         parent_object = src.full_name
     elif src.metadata_type in {"CustomField", "ValidationRule", "RecordType", "FieldSet", "ListView",
                                "CompactLayout", "WorkflowRule", "WorkflowFieldUpdate", "ApprovalProcess"}:
         parent_object = src.full_name.split(".")[0]
     elif src.metadata_type == "Layout":
         parent_object = src.full_name.split("-", 1)[0]
+    elif src.metadata_type == "QuickAction":
+        parent_object = root.value("targetObject") or (src.full_name.split(".")[0] if "." in src.full_name else "")
+    elif src.metadata_type == "ReportType":
+        parent_object = root.value("baseObject")
+    elif src.metadata_type == "CustomMetadata":
+        typ = src.full_name.split(".", 1)[0]
+        parent_object = typ if typ.endswith("__mdt") else typ + "__mdt"
+    if src.metadata_type == "EmailTemplate" and root.value("relatedEntityType"):
+        facts.nodes[src.component_id]["related_object"] = root.value("relatedEntityType")
     variables = {}
     for child in root.children:
         obj = child.value("object") or child.value("objectType")
@@ -195,7 +230,9 @@ def parse_metadata(facts: Facts) -> None:
             owner = facts.declare("FlowElement", src.full_name + "." + name, n.line,
                                   element_type=n.tag)
             facts.ref(src.component_id, "FlowElement", src.full_name + "." + name, "contains", n.line)
-        obj = n.value("object") or n.value("objectType") or obj
+        obj = n.value("object") or n.value("objectType") or n.value("sobjectType") or n.value("sObjectType") or obj
+        if src.metadata_type == "ReportType":
+            obj = n.value("table") or obj
         if n.tag == "fields" and n.value("fullName"):
             # Preserve lookup semantics for SOQL/formula relationship resolution.
             node = facts.nodes.get(owner, {})
@@ -210,6 +247,8 @@ def parse_metadata(facts: Facts) -> None:
         if n.tag in OBJECT_TAGS and text:
             facts.ref(owner, "CustomObject", text, "references_object", n.line)
         if n.tag in FIELD_TAGS and text and not n.children:
+            if n.tag == "fieldItem" and text.startswith("Record."):
+                text = text.removeprefix("Record.")
             name = text if "." in text or not obj else obj + "." + text
             if "." in name:
                 relation = "writes" if parent and parent.tag in {"inputAssignments", "fieldUpdates"} else "references_field"
@@ -220,11 +259,21 @@ def parse_metadata(facts: Facts) -> None:
             if typ in {"LightningComponentBundle", "AuraDefinitionBundle"}:
                 # c:foo and c/foo name local components; package namespaces stay.
                 name = re.sub(r"^c[:/]", "", name).replace(":", ".").replace("/", ".")
+            if typ in {"RecordType", "BusinessProcess", "MatchingRule"} and "." not in name and obj:
+                name = obj + "." + name
             facts.ref(owner, typ, name, "references", n.line)
         if n.tag in FORMULAS and text:
             expression_refs(facts, owner, text, obj, n.line, variables)
         if n.tag in {"elementReference", "assignToReference", "leftValueReference"} and text:
-            expression_refs(facts, owner, text, obj, n.line, variables)
+            # A scalar Flow variable isn't a field. Record variables and
+            # $Record paths have a declared object scope.
+            if "." in text:
+                expression_refs(facts, owner, text, obj, n.line, variables,
+                                "writes" if n.tag == "assignToReference" else "reads")
+        if not n.children and text and n.tag not in FORMULAS:
+            merge_refs(facts, owner, text, obj, n.line, variables)
+        for value in n.attributes.values():
+            merge_refs(facts, owner, value, obj, n.line, variables)
         if src.metadata_type == "Flow":
             if n.tag == "targetReference" and text:
                 facts.ref(owner, "FlowElement", src.full_name + "." + text, "flows_to", n.line)

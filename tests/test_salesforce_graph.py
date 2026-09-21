@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from graphify.salesforce import Source, build_graph, node_id, scan_project
 from graphify.salesforce.registry import identify, registry
 
@@ -211,3 +213,109 @@ def test_namespaced_field_and_label_resolution():
     ])
     assert ("pkg.Reader.read(Account)", "Account.pkg__Score__c") in edges(graph, "reads")
     assert ("Account.Rule", "pkg__Greeting") in edges(graph, "references")
+
+
+@pytest.mark.parametrize("body", [
+    "Hello {!Account.Score__c}",
+    "<html><body>Score: {!Account.Score__c}<br>Thanks</body></html>",
+    "Score: {{{Account.Score__c}}}",
+    "Score: {{Account.Score__c}}",
+])
+def test_email_template_body_links_custom_fields_with_exact_evidence(body):
+    graph = build_graph([*schema(), source("EmailTemplate", "Sales/Score", body,
+                                         "email/Sales/Score.email")])
+    assert ("Sales/Score", "Account.Score__c") in edges(graph, "reads")
+    edge = next(e for e in graph["edges"] if e["source"] == node_id("EmailTemplate", "Sales/Score"))
+    assert edge["source_file"] == "email/Sales/Score.email"
+    assert edge["source_location"] == "L1"
+    assert graph["stats"]["coverage"]["partial"] == 0
+
+
+def test_visualforce_email_context_and_relationship_traversal():
+    graph = build_graph([*schema(), catalog("CustomField", "Contact.Email"), catalog("CustomObject", "Contact"),
+        source("EmailTemplate", "Sales/Score", '''<messaging:emailTemplate recipientType="Contact" relatedToType="Account" subject="{!relatedTo.Name}">
+<messaging:plainTextEmailBody>
+Score: {!relatedTo.Score__c}; parent: {!relatedTo.Parent__r.Name}; recipient: {!recipient.Email}
+</messaging:plainTextEmailBody></messaging:emailTemplate>''', "email/Sales/Score.email")])
+    for target in ["Account.Name", "Account.Score__c", "Contact.Email"]:
+        assert ("Sales/Score", target) in edges(graph, "reads")
+    assert ("Sales/Score", "Account.Parent__c") in edges(graph, "traverses")
+    assert next(e for e in graph["edges"] if e["target_name"] == "Account.Score__c" and e["source"] == node_id("EmailTemplate", "Sales/Score"))["line"] == 3
+
+
+def test_lightning_email_context_binds_across_sidecar_and_unknown_recipient_stays_unresolved():
+    graph = build_graph([*schema(),
+        source("EmailTemplate", "Sales/Score", "Score: {{{RelatedTo.Score__c}}}; {{{Recipient.Email}}}", "email/Sales/Score.email"),
+        source("EmailTemplate", "Sales/Score", "<EmailTemplate><relatedEntityType>Account</relatedEntityType></EmailTemplate>", "email/Sales/Score.email-meta.xml")])
+    assert ("Sales/Score", "Account.Score__c") in edges(graph, "reads")
+    assert next(e for e in graph["edges"] if e["target_name"] == "Recipient.Email")["resolution"] == "unresolved"
+
+
+def test_email_prose_comments_and_formula_string_literals_do_not_invent_links():
+    graph = build_graph([*schema(), source("EmailTemplate", "Sales/Score",
+        "Account.Score__c\n<!-- {!Account.Score__c} -->\n{!IF(true, 'Account.Score__c', 'none')}", "email/Sales/Score.email")])
+    assert not any(e["source"] == node_id("EmailTemplate", "Sales/Score") for e in graph["edges"])
+
+
+def test_case_status_real_cross_metadata_pattern():
+    graph = build_graph([
+        catalog("CustomField", "Case.Status"),
+        source("Layout", "Case-Case Layout", "<Layout><layoutSections><layoutColumns><layoutItems>\n<field>Status</field></layoutItems></layoutColumns></layoutSections></Layout>"),
+        source("Flow", "Technical_Case", "<Flow><recordCreates><name>Insert_case</name><object>Case</object><inputAssignments>\n<field>Status</field><value><stringValue>New</stringValue></value></inputAssignments></recordCreates></Flow>"),
+        source("EmailTemplate", "Support/CaseStatus", "Status: {!Case.Status}", "email/Support/CaseStatus.email"),
+        source("PermissionSet", "Support", "<PermissionSet><fieldPermissions><field>Case.Status</field><readable>true</readable></fieldPermissions></PermissionSet>"),
+    ])
+    assert ("Case-Case Layout", "Case.Status") in edges(graph, "references_field")
+    assert ("Technical_Case.Insert_case", "Case.Status") in edges(graph, "writes")
+    assert ("Support/CaseStatus", "Case.Status") in edges(graph, "reads")
+    assert ("Support", "Case.Status") in edges(graph, "grants_access")
+
+
+def test_flow_assignments_text_templates_and_flexipage_field_items():
+    graph = build_graph([catalog("CustomField", "Case.Status"),
+        source("Flow", "CaseFlow", '''<Flow><start><object>Case</object></start>
+<assignments><name>SetStatus</name><assignmentItems><assignToReference>$Record.Status</assignToReference></assignmentItems></assignments>
+<textTemplates><name>Message</name><text>New status: {!$Record.Status}</text></textTemplates></Flow>'''),
+        source("FlexiPage", "CasePage", "<FlexiPage><sobjectType>Case</sobjectType><flexiPageRegions><itemInstances><fieldInstance><fieldItem>Record.Status</fieldItem></fieldInstance></itemInstances></flexiPageRegions></FlexiPage>")])
+    assert ("CaseFlow.SetStatus", "Case.Status") in edges(graph, "writes")
+    assert ("CaseFlow", "Case.Status") in edges(graph, "reads")
+    assert ("CasePage", "Case.Status") in edges(graph, "references_field")
+
+
+def test_apex_test_classes_keep_real_calls_and_field_writes():
+    graph = build_graph([*schema(),
+        source("ApexClass", "Scorer", "public class Scorer { public static void run(Account a) {} }"),
+        source("ApexClass", "ScorerTest", "@isTest private class ScorerTest { @isTest static void exercise() { Account a = new Account(); a.Score__c = 5; Scorer.run(a); } }")])
+    assert ("ScorerTest.exercise()", "Scorer.run(Account)") in edges(graph, "calls")
+    assert ("ScorerTest.exercise()", "Account.Score__c") in edges(graph, "writes")
+    assert all(n.get("is_test") for n in graph["nodes"] if n["name"].startswith("ScorerTest"))
+
+
+def test_reports_dashboards_workflow_alerts_and_value_sets_form_evidenced_paths():
+    graph = build_graph([*schema(), catalog("GlobalValueSet", "Scores"),
+        source("CustomField", "Account.Rating__c", "<CustomField><valueSet><valueSetName>Scores</valueSetName></valueSet></CustomField>"),
+        source("ReportType", "ScoredAccounts", "<ReportType><baseObject>Account</baseObject><sections><columns><table>Account</table><field>Score__c</field></columns></sections></ReportType>"),
+        source("Report", "Sales/Scored", "<Report><reportType>ScoredAccounts</reportType><columns><field>Account.Score__c</field></columns></Report>"),
+        source("Dashboard", "Sales/Pipeline", "<Dashboard><dashboardComponent><report>Sales/Scored</report></dashboardComponent></Dashboard>"),
+        source("EmailTemplate", "Sales/Score", "Your score is {!Account.Score__c}", "email/Sales/Score.email"),
+        source("Workflow", "Account", "<Workflow><alerts><fullName>ScoreAlert</fullName><template>Sales/Score</template></alerts><rules><fullName>ScoreRule</fullName><actions><name>ScoreAlert</name><type>Alert</type></actions></rules></Workflow>"),
+    ])
+    for pair in [("Sales/Pipeline", "Sales/Scored"), ("Sales/Scored", "ScoredAccounts"),
+                 ("ScoredAccounts", "Account.Score__c"), ("Account.Rating__c", "Scores"),
+                 ("Account.ScoreAlert", "Sales/Score"), ("Account.ScoreRule", "Account.ScoreAlert")]:
+        assert pair in edges(graph)
+
+
+def test_custom_metadata_values_reference_declared_type_fields():
+    graph = build_graph([catalog("CustomObject", "Config__mdt"), catalog("CustomField", "Config__mdt.Score__c"),
+        source("CustomMetadata", "Config.Default", "<CustomMetadata><values><field>Score__c</field><value>5</value></values></CustomMetadata>")])
+    assert ("Config.Default", "Config__mdt.Score__c") in edges(graph, "references_field")
+
+
+@pytest.mark.parametrize("kind", sorted(registry()))
+def test_each_registered_metadata_type_has_addressable_identity_and_coverage(kind):
+    graph = build_graph([source(kind, "Component", f"<{kind}/>")])
+    assert node_id(kind, "Component") in {n["id"] for n in graph["nodes"]}
+    assert graph["coverage"][0]["metadata_type"] == kind
+    assert graph["coverage"][0]["level"] in {"semantic", "structural", "partial"}
+    assert all(e["source_file"] and e["source_location"] for e in graph["edges"])

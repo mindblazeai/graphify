@@ -132,7 +132,11 @@ def parse_apex(facts: Facts) -> None:
             # identity even when Apex declares a bare class name.
             if not class_name and src.namespace and not full.startswith(src.namespace + "."):
                 full = src.namespace + "." + full
-            nid = facts.declare(DECLARATIONS[kind], full, line(n), label=name)
+            modifiers = next((c for c in n.named_children if c.type == "modifiers"), None)
+            annotations = [text(field(c, "name")) for c in walk(modifiers) if c.type == "annotation"] if modifiers else []
+            nid = facts.declare(DECLARATIONS[kind], full, line(n), label=name,
+                                annotations=annotations,
+                                is_test=any(a.casefold() == "istest" for a in annotations))
             if nid != owner:
                 facts.ref(owner, DECLARATIONS[kind], full, "contains", line(n))
                 if not class_name and src.metadata_type == "ApexClass":
@@ -169,7 +173,11 @@ def parse_apex(facts: Facts) -> None:
             params = [x for x in params_node.named_children if x.type == "formal_parameter"] if params_node else []
             param_types = [text(field(x, "type")) for x in params]
             full = f"{class_name}.{name}({','.join(param_types)})"
-            nid = facts.declare("ApexMethod", full, line(n), label=f".{name}()",
+            modifiers = next((c for c in n.named_children if c.type == "modifiers"), None)
+            is_test = facts.nodes.get(owner, {}).get("is_test", False) or bool(
+                modifiers and ("testmethod" in text(modifiers).casefold() or
+                               any(c.type == "annotation" and text(field(c, "name")).casefold() == "istest" for c in walk(modifiers))))
+            nid = facts.declare("ApexMethod", full, line(n), label=f".{name}()", is_test=is_test,
                                 owner_type=class_name, member_name=name,
                                 parameters=param_types, return_type=text(field(n, "type")))
             facts.ref(owner, "ApexMethod", full, "method", line(n))

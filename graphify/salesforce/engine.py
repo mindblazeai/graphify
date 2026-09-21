@@ -28,7 +28,10 @@ def extract_facts(source: Source) -> dict:
     elif source.path.endswith((".js", ".ts")):
         from .lightning import parse_javascript
         parse_javascript(facts)
-    elif source.path.endswith((".html", ".cmp", ".app", ".page", ".component", ".evt", ".intf")) and source.metadata_type in {"LightningComponentBundle", "AuraDefinitionBundle", "ApexPage", "ApexComponent"}:
+    elif (source.metadata_type == "EmailTemplate" and not source.path.endswith("-meta.xml")) or (
+        source.path.endswith((".html", ".cmp", ".app", ".page", ".component", ".evt", ".intf"))
+        and source.metadata_type in {"LightningComponentBundle", "AuraDefinitionBundle", "ApexPage", "ApexComponent"}
+    ):
         from .lightning import parse_markup
         parse_markup(facts)
     elif source.content.lstrip().startswith("<"):
@@ -74,7 +77,8 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 existing.setdefault("source_files", [existing["source_file"]])
                 if node["source_file"] not in existing["source_files"]:
                     existing["source_files"].append(node["source_file"])
-                for k in ("reference_to", "relationship_name", "data_type", "annotations"):
+                for k in ("reference_to", "relationship_name", "data_type", "annotations",
+                          "related_object", "recipient_object", "is_test"):
                     if node.get(k):
                         existing[k] = node[k]
         references.extend(fact["references"])
@@ -197,6 +201,11 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
         if kind == "FieldPath":
             return field_path(name, ns)
+        if kind == "TemplateField":
+            alias, _, path = name.partition(".")
+            component = nodes.get(ref["source"], {})
+            obj = component.get("related_object" if alias.casefold() == "relatedto" else "recipient_object")
+            return field_path(obj + "." + path, ns) if obj else []
         if kind == "ChildRelationship":
             return [n for obj in child_objects(name) for n in lookup("CustomObject", obj, ns)]
         if kind == "ApexMethod":
