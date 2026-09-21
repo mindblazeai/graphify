@@ -103,6 +103,11 @@ def parse_permissions(facts: Facts) -> None:
         mapping = PERMISSIONS[section]
         obj = row.get("SobjectType")
         field = row.get("Field", "")
+        # Some standard FieldPermissions rows return a bare field API name.
+        # SobjectType supplies its explicit context; binding still requires an
+        # independently declared field, never a synthesized declaration.
+        if isinstance(field, str) and API_NAME.fullmatch(field) and isinstance(obj, str):
+            field = obj + "." + field
         if (not isinstance(obj, str) or not API_NAME.fullmatch(obj)
                 or any(type(row.get(key)) is not bool for key in mapping)
                 or (section == "FieldPermissions" and (not isinstance(field, str)

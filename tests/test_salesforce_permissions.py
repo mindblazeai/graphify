@@ -85,6 +85,18 @@ def test_object_grant_retains_view_all_fields_without_inventing_individual_field
     assert graph["edges"][0]["target"] == node_id("CustomObject", "Account")
 
 
+@pytest.mark.parametrize("declared", [True, False])
+def test_bare_permission_field_uses_explicit_object_context_but_does_not_declare_a_target(declared):
+    sources = [captured("FieldPermissions", [field_record(SobjectType="MessagingEndUser", Field="IsOptedOut")])]
+    if declared:
+        sources.append(catalog("CustomField", "MessagingEndUser.IsOptedOut"))
+    graph = build_graph(sources)
+    edge = graph["edges"][0]
+    assert edge["target_name"] == "MessagingEndUser.IsOptedOut"
+    assert edge["resolution"] == ("resolved" if declared else "unresolved")
+    assert not any(d["code"] == "permission_api_grant_invalid" for d in graph["diagnostics"])
+
+
 @pytest.mark.parametrize("changes", [
     {"ParentId": "0PS000000000002"}, {"Field": "Other.Score__c"}, {"PermissionsRead": "true"},
     {"PermissionsEdit": None}, {"Id": "not-an-id"},
