@@ -31,6 +31,27 @@ def schema():
       </CustomObject>""")]
 
 
+def test_nested_folder_references_bind_verified_source_path_without_changing_identity():
+    graph = build_graph([
+        source("Report", "Bookings/Funnel", "<Report/>", "reports/Marketing/Bookings/Funnel.report-meta.xml"),
+        source("Report", "Other/Funnel", "<Report/>", "reports/Sales/Other/Funnel.report-meta.xml"),
+        source("Dashboard", "Sales/Overview", "<Dashboard><report>Marketing/Bookings/Funnel</report><report>Funnel</report></Dashboard>"),
+    ])
+    references = [e for e in graph["edges"] if e["target_kind"] == "Report"]
+    exact = next(e for e in references if e["target_name"] == "Marketing/Bookings/Funnel")
+    assert exact["resolution"] == "resolved" and exact["target"] == node_id("Report", "Bookings/Funnel")
+    assert next(e for e in references if e["target_name"] == "Funnel")["resolution"] == "unresolved"
+    assert node_id("Report", "Marketing/Bookings/Funnel") not in {n["id"] for n in graph["nodes"]}
+
+
+def test_colliding_verified_folder_aliases_remain_ambiguous():
+    graph = build_graph([
+        source("Report", name, "<Report/>", "reports/Marketing/Bookings/Funnel.report-meta.xml")
+        for name in ("Bookings/Funnel", "Marketing/Bookings/Funnel")
+    ] + [source("Dashboard", "Overview", "<Dashboard><report>Marketing/Bookings/Funnel</report></Dashboard>")])
+    assert next(e for e in graph["edges"] if e["target_kind"] == "Report")["resolution"] == "ambiguous"
+
+
 def test_apex_syntax_and_field_resolution_ignore_comments_and_strings():
     code = """public class Scorer {
       // Ghost.run(); update ghosts; [SELECT Hidden FROM Missing]

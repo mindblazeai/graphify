@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-4"
+ENGINE_VERSION = "salesforce-5"
 
 
 def node_id(kind: str, name: str) -> str:

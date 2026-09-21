@@ -101,11 +101,24 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         diagnostics.extend(fact["diagnostics"])
         coverage.append(fact["coverage"])
 
+    # listMetadata may expose a leaf-folder name while a verified retrieve
+    # returns its full hierarchy. Preserve the catalog identity/deep link and
+    # bind the exact source-path alias; never strip folders or guess basenames.
+    for source in sources:
+        if source.source_kind != "source" or source.metadata_type not in {"Report", "Dashboard", "EmailTemplate", "Document"}:
+            continue
+        identified = identify(source.path)
+        if identified and identified[0] == source.metadata_type and identified[1].casefold() != source.full_name.casefold():
+            node = nodes.get(source.component_id)
+            if node is not None:
+                node["aliases"] = sorted(set(node.get("aliases", [])) | {identified[1]})
+
     index: dict[tuple[str, str], list[dict]] = {}
     methods: dict[str, list[dict]] = {}
     fields = [n for n in nodes.values() if n["kind"] == "CustomField"]
     for n in nodes.values():
-        index.setdefault((n["kind"].casefold(), n["name"].casefold()), []).append(n)
+        for name in {n["name"].casefold(), *(a.casefold() for a in n.get("aliases", []))}:
+            index.setdefault((n["kind"].casefold(), name), []).append(n)
         if n["kind"] == "ApexMethod":
             methods.setdefault((n["owner_type"] + "." + n["member_name"]).casefold(), []).append(n)
 
