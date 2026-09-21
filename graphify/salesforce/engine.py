@@ -306,6 +306,13 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
             return field_path(raw.replace("$", "."), ns, intermediates)
         if kind == "FieldPath":
             found = field_path(name, ns, intermediates)
+            if raw := ref.get("field_name_or_id"):
+                # ServiceChannel permits either a standard field name or a
+                # custom field ID. Resolve against independently supplied names
+                # AND exact IDs; do not infer an ID from its prefix or length.
+                objects = {n["name"].casefold() for n in lookup("CustomObject", ref.get("field_object", ""), ns)}
+                found.extend(n for n in by_salesforce_id.get(salesforce_id(raw), [])
+                             if n["kind"] == "CustomField" and n["name"].rsplit(".", 1)[0].casefold() in objects)
             if not found and ref.get("context_object") and not lookup("CustomObject", name.split(".")[0], ns):
                 found = field_path(ref["context_object"] + "." + name, ns, intermediates)
             return found

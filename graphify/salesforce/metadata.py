@@ -8,6 +8,7 @@ from xml.parsers import expat
 
 from .model import Facts
 from .registry import registry
+from .declarative import SHAPES, parse_declarative
 
 
 @dataclass
@@ -178,6 +179,10 @@ def parse_metadata(facts: Facts) -> None:
     except (expat.ExpatError, ValueError, IndexError) as exc:
         facts.level = "partial"
         facts.issue("xml_parse_error", getattr(exc, "lineno", 1))
+        return
+    kind = root.tag if src.metadata_type == "Settings" and root.tag == "LeadConvertSettings" else src.metadata_type
+    if kind in SHAPES:
+        parse_declarative(facts, root, kind)
         return
     facts.level = "semantic" if src.metadata_type in SEMANTIC_TYPES else "structural"
     if src.metadata_type == "Profile":
