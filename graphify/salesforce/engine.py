@@ -111,7 +111,9 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                     existing["coverage"] = node["coverage"]
         references.extend(fact["references"])
         diagnostics.extend(fact["diagnostics"])
-        coverage.append(fact["coverage"])
+        # Corpus-dependent identity checks below must not poison reusable syntax
+        # coverage when a declaration disappears and later becomes available.
+        coverage.append(dict(fact["coverage"]))
 
     # listMetadata may expose a leaf-folder name while a verified retrieve
     # returns its full hierarchy. Preserve the catalog identity/deep link and
@@ -268,6 +270,8 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
 
     def resolve(ref, intermediates=None):
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
+        if "metadata_name_or_id" in ref:
+            return lookup(kind, name, ns) + [n for n in by_salesforce_id.get(salesforce_id(ref["metadata_name_or_id"]), []) if n["kind"] == kind]
         if "target_salesforce_id" in ref:
             # Never fall back to a display name or ID prefix. These declarations
             # were independently supplied in the same scoped source inventory.
@@ -344,6 +348,8 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         return lookup(kind, name, ns)
 
     edges = {}
+    unverified = set()
+    identity_issues = {}
     for original in references:
         ref = dict(original)
         if section := ref.get("permission_section"):
@@ -392,6 +398,12 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 "confidence": confidence, "weight": 1.0, "_origin": "salesforce"}
         key = hashlib.sha256(json.dumps(edge, sort_keys=True).encode()).hexdigest()[:32]
         edges[key] = {"id": key, **edge}
+        if ref.get("identity_contract") and resolution != "resolved":
+            component = nodes[ref["source"]]["component_id"]
+            unverified.add((component, ref["source_file"]))
+            identity_issues[key] = {"code": "metadata_identity_unverified", "source_file": ref["source_file"],
+                                    "line": ref["line"], "identity_contract": ref["identity_contract"],
+                                    "target_kind": ref["target_kind"], "target_name": ref["target_name"]}
         if resolution == "resolved" and ref["relation"] == "owned_by_profile":
             # A verified ProfileId makes the backing permission set a structural
             # member of that profile. Profile exploration can follow its grants
@@ -401,6 +413,18 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                        "target_salesforce_id": nodes[ref["source"]]["salesforce_id"], "relation": "contains"}
             inverse_key = hashlib.sha256(json.dumps(inverse, sort_keys=True).encode()).hexdigest()[:32]
             edges[inverse_key] = {"id": inverse_key, **inverse}
+
+    # Translation aliases and asset paths require verified metadata identity;
+    # syntactically plausible strings alone cannot close their coverage gap.
+    diagnostics.extend(identity_issues.values())
+    if unverified:
+        for entry in coverage:
+            key = (node_id(entry["metadata_type"], entry["full_name"]), entry["source_file"])
+            if key in unverified and entry["level"] == "semantic":
+                entry["level"] = "partial"
+        for node in nodes.values():
+            if (node.get("component_id"), node.get("source_file")) in unverified and node.get("coverage") == "semantic":
+                node["coverage"] = "partial"
 
     totals = {level: sum(c["level"] == level for c in coverage)
               for level in ("semantic", "structural", "catalog", "partial", "unparsed")}

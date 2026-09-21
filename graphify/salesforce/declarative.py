@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 from .model import Facts
 from .experience import SHAPES as EXPERIENCE_SHAPES, parse_experience, shape_path, site_reference
+from .translations import SHAPES as TRANSLATION_SHAPES, parse_translation
+from .assets import SHAPES as ASSET_SHAPES, parse_asset
 
 if TYPE_CHECKING:
     from .metadata import Element
@@ -53,6 +55,8 @@ SHAPES = {
     },
 }
 SHAPES.update(EXPERIENCE_SHAPES)
+SHAPES.update(TRANSLATION_SHAPES)
+SHAPES.update(ASSET_SHAPES)
 SHAPES = {kind: {path: frozenset(tags.split()) | ({"fullName"} if not path else set())
                  for path, tags in shape.items()} for kind, shape in SHAPES.items()}
 
@@ -129,7 +133,13 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
         else:
             issue("metadata_reference_context_missing", n, property=n.tag)
 
-    if kind in EXPERIENCE_SHAPES:
+    if kind in TRANSLATION_SHAPES:
+        parse_translation(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind in ASSET_SHAPES:
+        parse_asset(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind in EXPERIENCE_SHAPES:
         parse_experience(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
 
     elif kind == "PathAssistant":
