@@ -6,3 +6,12 @@ This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 Portions of this software were contributed under the MIT License prior to the
 relicensing and remain available under those terms. The original MIT license
 text is retained in LICENSE-MIT.
+
+LivingContext fork additions (2026): graphify/salesforce, Salesforce tests and
+documentation, and the optional Apex AST adapter. These modifications are not
+affiliated with or endorsed by Salesforce or Graphify Labs.
+
+graphify/salesforce/registry.json is a normalized derivative of the metadata
+registry in @salesforce/source-deploy-retrieve. Copyright (c) 2026 Salesforce,
+Inc. All rights reserved. Licensed under Apache-2.0 (see LICENSE). Generation
+provenance and the upstream source digest are included in registry.json.

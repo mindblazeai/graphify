@@ -1,3 +1,5 @@
+> LivingContext-maintained fork: adds a local [Salesforce metadata and semantic graph engine](docs/salesforce.md). This is a fork extension, not a claim about Graphify's hosted product. Upstream notices and documentation are retained below.
+
 <p align="center">
   <a href="https://graphify.com"><img src="https://raw.githubusercontent.com/Graphify-Labs/graphify/v8/docs/graphify-logo.png" width="480" height="252" alt="Graphify"/></a>
 </p>

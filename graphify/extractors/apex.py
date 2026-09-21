@@ -1,4 +1,7 @@
-"""Apex extractor. Moved verbatim from graphify/extract.py."""
+"""Apex extractor; modified in the LivingContext fork to prefer Tree-sitter.
+
+The original graphify/extract.py regex implementation remains as a fallback.
+"""
 from __future__ import annotations
 
 
@@ -7,6 +10,45 @@ from graphify.extractors.base import _file_stem, _make_id
 
 
 def extract_apex(path: Path) -> dict:
+    """Use Salesforce AST extraction when the salesforce extra is installed."""
+    try:
+        import tree_sitter_language_pack  # noqa: F401
+    except ImportError:
+        result = _extract_apex_regex(path)
+        result["diagnostics"] = [{"code": "regex_fallback", "source_file": str(path),
+                                  "message": "Install graphifyy[salesforce] for Apex AST support"}]
+        return result
+    from graphify.salesforce import Source, build_graph
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {"nodes": [], "edges": []}
+    kind = "ApexTrigger" if path.suffix == ".trigger" else "ApexClass"
+    result = build_graph([Source(str(path), content, kind, path.stem)])
+    file_id = _make_id(str(path))
+    result["nodes"].append({"id": file_id, "label": path.name, "file_type": "code",
+                            "source_file": str(path), "source_location": "L1"})
+    declarations = [n for n in result["nodes"] if n.get("kind") in
+                    {"ApexClass", "ApexInterface", "ApexEnum", "ApexTrigger"} and not n.get("external")]
+    for n in declarations:
+        result["edges"].append({"source": file_id, "target": n["id"], "relation": "contains",
+                                "confidence": "EXTRACTED", "source_file": str(path), "weight": 1.0})
+    # Preserve Graphify's broad `uses` relation alongside the richer typed
+    # Salesforce edges for existing CLI graph consumers.
+    for edge in list(result["edges"]):
+        if edge["relation"] in {"queries", "writes", "triggers_on"}:
+            result["edges"].append({**edge, "relation": "uses"})
+            if edge.get("operation"):
+                op = edge["operation"]
+                nid = _make_id("dml", op)
+                if not any(n["id"] == nid for n in result["nodes"]):
+                    result["nodes"].append({"id": nid, "label": op, "file_type": "code",
+                                            "source_file": str(path), "source_location": edge["source_location"]})
+                result["edges"].append({**edge, "target": nid, "relation": "uses"})
+    return result
+
+
+def _extract_apex_regex(path: Path) -> dict:
     """Extract classes, interfaces, enums, methods, and Salesforce constructs from
     Apex .cls and .trigger files using regex (no tree-sitter grammar on PyPI)."""
     import re as _re

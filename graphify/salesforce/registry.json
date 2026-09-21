@@ -1,0 +1,4009 @@
+{
+  "copyright": "Copyright (c) 2026 Salesforce, Inc. All rights reserved.",
+  "license": "Apache-2.0; normalized derivative, see NOTICE",
+  "source": "@salesforce/source-deploy-retrieve",
+  "source_sha256": "4f16f0c35055965f75c97584ab1825fca8718ccd0e4cefbe3524890c3b779def",
+  "source_version": "12.37.1",
+  "types": {
+    "AIApplication": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiApplications",
+      "in_folder": false,
+      "suffix": "ai"
+    },
+    "AIApplicationConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiApplicationConfigs",
+      "in_folder": false,
+      "suffix": "aiapplicationconfig"
+    },
+    "AIAssistantTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiAssistantTemplates",
+      "in_folder": false,
+      "suffix": "aiAssistantTemplate"
+    },
+    "AIScoringModelDefinition": {
+      "adapter": "default",
+      "children": {
+        "aiscoringmodeldefversion": {
+          "directory": "aiScoringModelDefVersions",
+          "ignore_parent_name": false,
+          "name": "AIScoringModelDefVersion",
+          "suffix": "aiScoringModelDefVersion",
+          "xml_element": "aiScoringModelDefVersions"
+        }
+      },
+      "directory": "aiScoringModelDefinitions",
+      "in_folder": false,
+      "suffix": "aiScoringModelDefinition"
+    },
+    "AIUsecaseDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiUsecaseDefinitions",
+      "in_folder": false,
+      "suffix": "aiUsecaseDefinitions"
+    },
+    "AccessControlPolicy": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "accessControlPolicies",
+      "in_folder": false,
+      "suffix": "policy"
+    },
+    "AccountForecastSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AccountForecastSettings",
+      "in_folder": false,
+      "suffix": "accountForecastSetting"
+    },
+    "AccountPlanObjMeasCalcDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "accountPlanObjMeasCalcDefs",
+      "in_folder": false,
+      "suffix": "accountPlanObjMeasCalcDef"
+    },
+    "AccountRelationshipShareRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "accountRelationshipShareRules",
+      "in_folder": false,
+      "suffix": "accountRelationshipShareRule"
+    },
+    "AccountingFieldMapping": {
+      "adapter": "default",
+      "children": {},
+      "directory": "accountingFieldMappings",
+      "in_folder": false,
+      "suffix": "accountingFieldMapping"
+    },
+    "AccountingModelConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "accountingModelConfigs",
+      "in_folder": false,
+      "suffix": "accountingModelConfig"
+    },
+    "AcctMgrTargetSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "acctMgrTargetSettings",
+      "in_folder": false,
+      "suffix": "acctMgrTargetSetting"
+    },
+    "ActionLauncherItemDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ActionLauncherItemDef",
+      "in_folder": false,
+      "suffix": "actionLauncherItemDef"
+    },
+    "ActionLinkGroupTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "actionLinkGroupTemplates",
+      "in_folder": false,
+      "suffix": "actionLinkGroupTemplate"
+    },
+    "ActionPlanTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "actionPlanTemplates",
+      "in_folder": false,
+      "suffix": "apt"
+    },
+    "ActionableEventOrchDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ActionableEventOrchDefSettings",
+      "in_folder": false,
+      "suffix": "settings"
+    },
+    "ActionableEventTypeDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ActionableEventTypeDefSettings",
+      "in_folder": false,
+      "suffix": "settings"
+    },
+    "ActionableListDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "actionableListDefinitions",
+      "in_folder": false,
+      "suffix": "actionableListDefinition"
+    },
+    "ActivationPlatform": {
+      "adapter": "default",
+      "children": {},
+      "directory": "activationPlatforms",
+      "in_folder": false,
+      "suffix": "activationPlatform"
+    },
+    "ActnblListKeyPrfmIndDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "actnblListKeyPrfmIndDefs",
+      "in_folder": false,
+      "suffix": "actnblListKeyPrfmIndDef"
+    },
+    "AdvAccountForecastSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AdvAccountForecastSet",
+      "in_folder": false,
+      "suffix": "advAccountForecastSet"
+    },
+    "AdvAcctForecastDimSource": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AdvAcctForecastDimSource",
+      "in_folder": false,
+      "suffix": "advAcctForecastDimSource"
+    },
+    "AdvAcctForecastPeriodGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AdvAcctForecastPeriodGroup",
+      "in_folder": false,
+      "suffix": "advAcctForecastPeriodGroup"
+    },
+    "AffinityScoreDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "affinityScoreDefinitions",
+      "in_folder": false,
+      "suffix": "affinityScoreDefinition"
+    },
+    "AiAgentScorerDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiAgentScorerDefinitions",
+      "in_folder": false,
+      "suffix": "aiAgentScorerDefinition"
+    },
+    "AiAuthoringBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "aiAuthoringBundles",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "AiEvaluationDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiEvaluationDefinitions",
+      "in_folder": false,
+      "suffix": "aiEvaluationDefinition"
+    },
+    "AiResponseFormat": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiResponseFormats",
+      "in_folder": false,
+      "suffix": "aiResponseFormat"
+    },
+    "AiSurface": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiSurfaces",
+      "in_folder": false,
+      "suffix": "aiSurface"
+    },
+    "AiTestingDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "aiTestingDefinitions",
+      "in_folder": false,
+      "suffix": "aiTestingDefinition"
+    },
+    "AnalyticSnapshot": {
+      "adapter": "default",
+      "children": {},
+      "directory": "analyticSnapshots",
+      "in_folder": false,
+      "suffix": "snapshot"
+    },
+    "AnalyticsDashboard": {
+      "adapter": "default",
+      "children": {},
+      "directory": "analyticsDashboards",
+      "in_folder": false,
+      "suffix": "uadash"
+    },
+    "AnalyticsVisualization": {
+      "adapter": "default",
+      "children": {},
+      "directory": "analyticsVisualizations",
+      "in_folder": false,
+      "suffix": "uaviz"
+    },
+    "AnalyticsWorkspace": {
+      "adapter": "default",
+      "children": {},
+      "directory": "analyticsWorkspaces",
+      "in_folder": false,
+      "suffix": "uawork"
+    },
+    "AnimationRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "animationRules",
+      "in_folder": false,
+      "suffix": "animationRule"
+    },
+    "ApexClass": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "classes",
+      "in_folder": false,
+      "suffix": "cls"
+    },
+    "ApexComponent": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "components",
+      "in_folder": false,
+      "suffix": "component"
+    },
+    "ApexEmailNotifications": {
+      "adapter": "default",
+      "children": {},
+      "directory": "apexEmailNotifications",
+      "in_folder": false,
+      "suffix": "notifications"
+    },
+    "ApexPage": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "pages",
+      "in_folder": false,
+      "suffix": "page"
+    },
+    "ApexTestSuite": {
+      "adapter": "default",
+      "children": {},
+      "directory": "testSuites",
+      "in_folder": false,
+      "suffix": "testSuite"
+    },
+    "ApexTrigger": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "triggers",
+      "in_folder": false,
+      "suffix": "trigger"
+    },
+    "ApiNamedQuery": {
+      "adapter": "default",
+      "children": {},
+      "directory": "apiNamedQueries",
+      "in_folder": false,
+      "suffix": "apiNamedQuery"
+    },
+    "AppFrameworkTemplateBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "appTemplates",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "AppMenu": {
+      "adapter": "default",
+      "children": {},
+      "directory": "appMenus",
+      "in_folder": false,
+      "suffix": "appMenu"
+    },
+    "ApplicationRecordTypeConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ApplicationRecordTypeConfig",
+      "in_folder": false,
+      "suffix": "applicationRecordTypeConfig"
+    },
+    "ApplicationSubtypeDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ApplicationSubtypeDefinitions",
+      "in_folder": false,
+      "suffix": "applicationSubtypeDefinition"
+    },
+    "AppointmentAssignmentPolicy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "appointmentAssignmentPolicies",
+      "in_folder": false,
+      "suffix": "policy"
+    },
+    "AppointmentSchedulingPolicy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "appointmentSchedulingPolicies",
+      "in_folder": false,
+      "suffix": "policy"
+    },
+    "ApprovalProcess": {
+      "adapter": "default",
+      "children": {},
+      "directory": "approvalProcesses",
+      "in_folder": false,
+      "suffix": "approvalProcess"
+    },
+    "AssessmentConfiguration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AssessmentConfigurations",
+      "in_folder": false,
+      "suffix": "assessmentConfiguration"
+    },
+    "AssessmentQuestion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AssessmentQuestions",
+      "in_folder": false,
+      "suffix": "aq"
+    },
+    "AssessmentQuestionSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "AssessmentQuestionSets",
+      "in_folder": false,
+      "suffix": "aqs"
+    },
+    "AssignmentRules": {
+      "adapter": "default",
+      "children": {
+        "assignmentrule": {
+          "directory": "assignmentRules",
+          "ignore_parent_name": false,
+          "name": "AssignmentRule",
+          "suffix": "assignmentRule",
+          "xml_element": "assignmentRule"
+        }
+      },
+      "directory": "assignmentRules",
+      "in_folder": false,
+      "suffix": "assignmentRules"
+    },
+    "AssistantContextItem": {
+      "adapter": "default",
+      "children": {},
+      "directory": "assistantContextItems",
+      "in_folder": false,
+      "suffix": "assistantContextItem"
+    },
+    "AssistantDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "assistantDefinitions",
+      "in_folder": false,
+      "suffix": "assistantDefinition"
+    },
+    "AssistantRecommendationType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "assistantRecommendationTypes",
+      "in_folder": false,
+      "suffix": "assistantRecommendationType"
+    },
+    "AssistantSkillQuickAction": {
+      "adapter": "default",
+      "children": {},
+      "directory": "assistantSkillQuickActions",
+      "in_folder": false,
+      "suffix": "assistantSkillQuickAction"
+    },
+    "AssistantSkillSobjectAction": {
+      "adapter": "default",
+      "children": {},
+      "directory": "assistantSkillSobjectActions",
+      "in_folder": false,
+      "suffix": "assistantSkillSobjectAction"
+    },
+    "AssistantVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "assistantVersions",
+      "in_folder": false,
+      "suffix": "assistantVersion"
+    },
+    "Audience": {
+      "adapter": "default",
+      "children": {},
+      "directory": "audience",
+      "in_folder": false,
+      "suffix": "audience"
+    },
+    "AuraDefinitionBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "aura",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "AuthProvider": {
+      "adapter": "default",
+      "children": {},
+      "directory": "authproviders",
+      "in_folder": false,
+      "suffix": "authprovider"
+    },
+    "AutoResponseRules": {
+      "adapter": "default",
+      "children": {
+        "autoresponserule": {
+          "directory": "autoResponseRules",
+          "ignore_parent_name": false,
+          "name": "AutoResponseRule",
+          "suffix": "autoResponseRule",
+          "xml_element": "autoResponseRule"
+        }
+      },
+      "directory": "autoResponseRules",
+      "in_folder": false,
+      "suffix": "autoResponseRules"
+    },
+    "BatchCalcJobDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "batchCalcJobDefinitions",
+      "in_folder": false,
+      "suffix": "batchCalcJobDefinition"
+    },
+    "BatchProcessJobDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "batchProcessJobDefinitions",
+      "in_folder": false,
+      "suffix": "batchProcessJobDefinition"
+    },
+    "BenefitAction": {
+      "adapter": "default",
+      "children": {},
+      "directory": "benefitActions",
+      "in_folder": false,
+      "suffix": "benefitAction"
+    },
+    "BlacklistedConsumer": {
+      "adapter": "default",
+      "children": {},
+      "directory": "blacklistedConsumers",
+      "in_folder": false,
+      "suffix": "blacklistedConsumer"
+    },
+    "BldgEnrgyIntensityCnfg": {
+      "adapter": "default",
+      "children": {},
+      "directory": "buildingEnergyIntensityConfigs",
+      "in_folder": false,
+      "suffix": "buildingEnergyIntensityConfig"
+    },
+    "Bot": {
+      "adapter": "decomposed",
+      "children": {
+        "botversion": {
+          "directory": "botVersions",
+          "ignore_parent_name": false,
+          "name": "BotVersion",
+          "suffix": "botVersion",
+          "xml_element": "botVersions"
+        }
+      },
+      "directory": "bots",
+      "in_folder": false,
+      "suffix": "bot"
+    },
+    "BotBlock": {
+      "adapter": "default",
+      "children": {},
+      "directory": "botBlocks",
+      "in_folder": false,
+      "suffix": "botBlock"
+    },
+    "BotTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "botTemplates",
+      "in_folder": false,
+      "suffix": "botTemplate"
+    },
+    "BrandingSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "brandingSets",
+      "in_folder": false,
+      "suffix": "brandingSet"
+    },
+    "BriefcaseDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "briefcaseDefinitions",
+      "in_folder": false,
+      "suffix": "briefcaseDefinition"
+    },
+    "BusinessProcessFeedbackConfiguration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "businessProcessFeedbackConfigurations",
+      "in_folder": false,
+      "suffix": "businessProcessFeedbackConfiguration"
+    },
+    "BusinessProcessGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "businessProcessGroups",
+      "in_folder": false,
+      "suffix": "businessProcessGroup"
+    },
+    "BusinessProcessTypeDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "BusinessProcessTypeDefinitions",
+      "in_folder": false,
+      "suffix": "businessProcessTypeDefinition"
+    },
+    "CMSConnectSource": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cmsConnectSource",
+      "in_folder": false,
+      "suffix": "cmsConnectSource"
+    },
+    "CallCenter": {
+      "adapter": "default",
+      "children": {},
+      "directory": "callCenters",
+      "in_folder": false,
+      "suffix": "callCenter"
+    },
+    "CallCenterRoutingMap": {
+      "adapter": "default",
+      "children": {},
+      "directory": "callCenterRoutingMaps",
+      "in_folder": false,
+      "suffix": "callCenterRoutingMap"
+    },
+    "CallCoachingMediaProvider": {
+      "adapter": "default",
+      "children": {},
+      "directory": "callCoachingMediaProviders",
+      "in_folder": false,
+      "suffix": "callCoachingMediaProvider"
+    },
+    "CallCtrAgentFavTrfrDest": {
+      "adapter": "default",
+      "children": {},
+      "directory": "callCtrAgentFavTrfrDests",
+      "in_folder": false,
+      "suffix": "callCtrAgentFavTrfrDest"
+    },
+    "CampaignInfluenceModel": {
+      "adapter": "default",
+      "children": {},
+      "directory": "campaignInfluenceModels",
+      "in_folder": false,
+      "suffix": "campaignInfluenceModel"
+    },
+    "CanvasMetadata": {
+      "adapter": "default",
+      "children": {},
+      "directory": "Canvases",
+      "in_folder": false,
+      "suffix": "Canvas"
+    },
+    "CareBenefitVerifySettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "careBenefitVerifySettings",
+      "in_folder": false,
+      "suffix": "careBenefitVerifySettings"
+    },
+    "CareLimitType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "careLimitTypes",
+      "in_folder": false,
+      "suffix": "careLimitType"
+    },
+    "CareProviderAfflRoleConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "careProviderAfflRoleConfigs",
+      "in_folder": false,
+      "suffix": "careProviderAfflRoleConfig"
+    },
+    "CareProviderSearchConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "careProviderSearchConfigs",
+      "in_folder": false,
+      "suffix": "careProviderSearchConfig"
+    },
+    "CareRequestConfiguration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "careRequestConfigurations",
+      "in_folder": false,
+      "suffix": "careRequestConfiguration"
+    },
+    "CareSystemFieldMapping": {
+      "adapter": "default",
+      "children": {},
+      "directory": "careSystemFieldMappings",
+      "in_folder": false,
+      "suffix": "careSystemFieldMapping"
+    },
+    "CaseSubjectParticle": {
+      "adapter": "default",
+      "children": {},
+      "directory": "CaseSubjectParticles",
+      "in_folder": false,
+      "suffix": "CaseSubjectParticle"
+    },
+    "CatalogedApi": {
+      "adapter": "default",
+      "children": {},
+      "directory": "catalogedApis",
+      "in_folder": false,
+      "suffix": "catalogedApi"
+    },
+    "CatalogedApiArtifactVersionInfo": {
+      "adapter": "default",
+      "children": {},
+      "directory": "catalogedApiArtifactVersionInfos",
+      "in_folder": false,
+      "suffix": "catalogedApiArtifactVersionInfo"
+    },
+    "CatalogedApiVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "catalogedApiVersions",
+      "in_folder": false,
+      "suffix": "catalogedApiVersion"
+    },
+    "Certificate": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "certs",
+      "in_folder": false,
+      "suffix": "crt"
+    },
+    "ChannelLayout": {
+      "adapter": "default",
+      "children": {},
+      "directory": "channelLayouts",
+      "in_folder": false,
+      "suffix": "channelLayout"
+    },
+    "ChannelObjectLinkingRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ChannelObjectLinkingRules",
+      "in_folder": false,
+      "suffix": "ChannelObjectLinkingRule"
+    },
+    "ChatterExtension": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ChatterExtensions",
+      "in_folder": false,
+      "suffix": "ChatterExtension"
+    },
+    "ChoiceList": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ChoiceList",
+      "in_folder": false,
+      "suffix": "ChoiceList"
+    },
+    "ClauseCatgConfiguration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "clauseCatgConfigurations",
+      "in_folder": false,
+      "suffix": "clauseCatgConfiguration"
+    },
+    "CleanDataService": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cleanDataServices",
+      "in_folder": false,
+      "suffix": "cleanDataService"
+    },
+    "CnfgItemAttrDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemAttrDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemAttrDef"
+    },
+    "CnfgItemAttrPcklstValDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemAttrPcklstValDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemAttrPcklstValDef"
+    },
+    "CnfgItemAttrPicklistDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemAttrPicklistDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemAttrPicklistDef"
+    },
+    "CnfgItemAttrSetAttr": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemAttrSetAttrs",
+      "in_folder": false,
+      "suffix": "cnfgItemAttrSetAttr"
+    },
+    "CnfgItemAttrSetDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemAttrSetDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemAttrSetDef"
+    },
+    "CnfgItemSourceDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemSourceDefinitions",
+      "in_folder": false,
+      "suffix": "cnfgItemSourceDefinition"
+    },
+    "CnfgItemTypeAttrRelDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemTypeAttrRelDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemTypeAttrRelDef"
+    },
+    "CnfgItemTypeDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemTypeDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemTypeDef"
+    },
+    "CnfgItemTypeIdentFieldMap": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemTypeIdentFieldMaps",
+      "in_folder": false,
+      "suffix": "cnfgItemTypeIdentFieldMap"
+    },
+    "CnfgItemTypeIdentRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemTypeIdentRules",
+      "in_folder": false,
+      "suffix": "cnfgItemTypeIdentRule"
+    },
+    "CnfgItemTypeRelationDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgItemTypeRelationDefs",
+      "in_folder": false,
+      "suffix": "cnfgItemTypeRelationDef"
+    },
+    "CnfgMgmtRelationTypeDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cnfgMgmtRelationTypeDefs",
+      "in_folder": false,
+      "suffix": "cnfgMgmtRelationTypeDef"
+    },
+    "CommandAction": {
+      "adapter": "default",
+      "children": {},
+      "directory": "commandActions",
+      "in_folder": false,
+      "suffix": "commandaction"
+    },
+    "Community": {
+      "adapter": "default",
+      "children": {},
+      "directory": "communities",
+      "in_folder": false,
+      "suffix": "community"
+    },
+    "CommunityTemplateDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "communityTemplateDefinitions",
+      "in_folder": false,
+      "suffix": "communityTemplateDefinition"
+    },
+    "CommunityThemeDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "communityThemeDefinitions",
+      "in_folder": false,
+      "suffix": "communityThemeDefinition"
+    },
+    "ComputeExtension": {
+      "adapter": "default",
+      "children": {},
+      "directory": "computeExtensions",
+      "in_folder": false,
+      "suffix": "computeExtension"
+    },
+    "ConnectedApp": {
+      "adapter": "default",
+      "children": {},
+      "directory": "connectedApps",
+      "in_folder": false,
+      "suffix": "connectedApp"
+    },
+    "ContentAsset": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "contentassets",
+      "in_folder": false,
+      "suffix": "asset"
+    },
+    "ContentTypeBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "contentTypes",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "ContextDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "contextDefinitions",
+      "in_folder": false,
+      "suffix": "contextDefinition"
+    },
+    "ContextUseCaseMapping": {
+      "adapter": "default",
+      "children": {},
+      "directory": "contextUseCaseMappings",
+      "in_folder": false,
+      "suffix": "contextUseCaseMapping"
+    },
+    "ContractType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "contractTypes",
+      "in_folder": false,
+      "suffix": "contractType"
+    },
+    "ConvIntelligenceSignalRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ConvIntelligenceSignalRule",
+      "in_folder": false,
+      "suffix": "ConvIntelligenceSignalRule"
+    },
+    "ConversationChannelDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "conversationChannelDefinitions",
+      "in_folder": false,
+      "suffix": "ConversationChannelDefinition"
+    },
+    "ConversationMessageDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "conversationMessageDefinitions",
+      "in_folder": false,
+      "suffix": "conversationMessageDefinition"
+    },
+    "ConversationVendorFieldDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ConversationVendorFieldDefinitions",
+      "in_folder": false,
+      "suffix": "ConversationVendorFieldDefinition"
+    },
+    "ConversationVendorInfo": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ConversationVendorInformation",
+      "in_folder": false,
+      "suffix": "ConversationVendorInformation"
+    },
+    "CorsWhitelistOrigin": {
+      "adapter": "default",
+      "children": {},
+      "directory": "corsWhitelistOrigins",
+      "in_folder": false,
+      "suffix": "corsWhitelistOrigin"
+    },
+    "CspTrustedSite": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cspTrustedSites",
+      "in_folder": false,
+      "suffix": "cspTrustedSite"
+    },
+    "CustomApplication": {
+      "adapter": "default",
+      "children": {},
+      "directory": "applications",
+      "in_folder": false,
+      "suffix": "app"
+    },
+    "CustomApplicationComponent": {
+      "adapter": "default",
+      "children": {},
+      "directory": "customApplicationComponents",
+      "in_folder": false,
+      "suffix": "customApplicationComponent"
+    },
+    "CustomDataType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "datatypes",
+      "in_folder": false,
+      "suffix": "datatype"
+    },
+    "CustomExperience": {
+      "adapter": "default",
+      "children": {},
+      "directory": "customExperiences",
+      "in_folder": false,
+      "suffix": "customExperience"
+    },
+    "CustomFeedFilter": {
+      "adapter": "default",
+      "children": {},
+      "directory": "feedFilters",
+      "in_folder": false,
+      "suffix": "feedFilter"
+    },
+    "CustomHelpMenuSection": {
+      "adapter": "default",
+      "children": {},
+      "directory": "customHelpMenuSections",
+      "in_folder": false,
+      "suffix": "customHelpMenuSection"
+    },
+    "CustomIndex": {
+      "adapter": "default",
+      "children": {},
+      "directory": "customindex",
+      "in_folder": false,
+      "suffix": "indx"
+    },
+    "CustomLabels": {
+      "adapter": "default",
+      "children": {
+        "customlabel": {
+          "directory": "labels",
+          "ignore_parent_name": true,
+          "name": "CustomLabel",
+          "suffix": "labels",
+          "xml_element": "labels"
+        }
+      },
+      "directory": "labels",
+      "in_folder": false,
+      "suffix": "labels"
+    },
+    "CustomMetadata": {
+      "adapter": "default",
+      "children": {},
+      "directory": "customMetadata",
+      "in_folder": false,
+      "suffix": "md"
+    },
+    "CustomNotificationType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "notificationtypes",
+      "in_folder": false,
+      "suffix": "notiftype"
+    },
+    "CustomObject": {
+      "adapter": "decomposed",
+      "children": {
+        "businessprocess": {
+          "directory": "businessProcesses",
+          "ignore_parent_name": false,
+          "name": "BusinessProcess",
+          "suffix": "businessProcess",
+          "xml_element": "businessProcesses"
+        },
+        "compactlayout": {
+          "directory": "compactLayouts",
+          "ignore_parent_name": false,
+          "name": "CompactLayout",
+          "suffix": "compactLayout",
+          "xml_element": "compactLayouts"
+        },
+        "customfield": {
+          "directory": "fields",
+          "ignore_parent_name": false,
+          "name": "CustomField",
+          "suffix": "field",
+          "xml_element": "fields"
+        },
+        "fieldset": {
+          "directory": "fieldSets",
+          "ignore_parent_name": false,
+          "name": "FieldSet",
+          "suffix": "fieldSet",
+          "xml_element": "fieldSets"
+        },
+        "index": {
+          "directory": "indexes",
+          "ignore_parent_name": false,
+          "name": "Index",
+          "suffix": "index",
+          "xml_element": "indexes"
+        },
+        "listview": {
+          "directory": "listViews",
+          "ignore_parent_name": false,
+          "name": "ListView",
+          "suffix": "listView",
+          "xml_element": "listViews"
+        },
+        "recordtype": {
+          "directory": "recordTypes",
+          "ignore_parent_name": false,
+          "name": "RecordType",
+          "suffix": "recordType",
+          "xml_element": "recordTypes"
+        },
+        "sharingreason": {
+          "directory": "sharingReasons",
+          "ignore_parent_name": false,
+          "name": "SharingReason",
+          "suffix": "sharingReason",
+          "xml_element": "sharingReasons"
+        },
+        "validationrule": {
+          "directory": "validationRules",
+          "ignore_parent_name": false,
+          "name": "ValidationRule",
+          "suffix": "validationRule",
+          "xml_element": "validationRules"
+        },
+        "weblink": {
+          "directory": "webLinks",
+          "ignore_parent_name": false,
+          "name": "WebLink",
+          "suffix": "webLink",
+          "xml_element": "webLinks"
+        }
+      },
+      "directory": "objects",
+      "in_folder": false,
+      "suffix": "object"
+    },
+    "CustomObjectTranslation": {
+      "adapter": "decomposed",
+      "children": {
+        "customfieldtranslation": {
+          "directory": "fields",
+          "ignore_parent_name": false,
+          "name": "CustomFieldTranslation",
+          "suffix": "fieldTranslation",
+          "xml_element": "fields"
+        }
+      },
+      "directory": "objectTranslations",
+      "in_folder": false,
+      "suffix": "objectTranslation"
+    },
+    "CustomPageWebLink": {
+      "adapter": "default",
+      "children": {},
+      "directory": "weblinks",
+      "in_folder": false,
+      "suffix": "weblink"
+    },
+    "CustomPermission": {
+      "adapter": "default",
+      "children": {},
+      "directory": "customPermissions",
+      "in_folder": false,
+      "suffix": "customPermission"
+    },
+    "CustomSite": {
+      "adapter": "default",
+      "children": {},
+      "directory": "sites",
+      "in_folder": false,
+      "suffix": "site"
+    },
+    "CustomTab": {
+      "adapter": "default",
+      "children": {},
+      "directory": "tabs",
+      "in_folder": false,
+      "suffix": "tab"
+    },
+    "Dashboard": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dashboards",
+      "in_folder": true,
+      "suffix": "dashboard"
+    },
+    "DashboardFolder": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dashboards",
+      "in_folder": false,
+      "suffix": "dashboardFolder"
+    },
+    "DataCalcInsightTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataCalcInsightTemplates",
+      "in_folder": false,
+      "suffix": "dataCalcInsightTemplate"
+    },
+    "DataCategoryGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "datacategorygroups",
+      "in_folder": false,
+      "suffix": "datacategorygroup"
+    },
+    "DataConnector": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataconnectors",
+      "in_folder": false,
+      "suffix": "dataconnector"
+    },
+    "DataConnectorIngestApi": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataConnectorIngestApis",
+      "in_folder": false,
+      "suffix": "dataConnectorIngestApi"
+    },
+    "DataConnectorS3": {
+      "adapter": "default",
+      "children": {},
+      "directory": "s3DataConnectors",
+      "in_folder": false,
+      "suffix": "s3DataConnector"
+    },
+    "DataKitObjectDependency": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataKitObjectDependencies",
+      "in_folder": false,
+      "suffix": "dataKitObjectDependency"
+    },
+    "DataKitObjectTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataKitObjectTemplates",
+      "in_folder": false,
+      "suffix": "dataKitObjectTemplate"
+    },
+    "DataMapperDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataMapperDefinitions",
+      "in_folder": false,
+      "suffix": "dataMapperDefinition"
+    },
+    "DataObjectBuildOrgTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataObjectBuildOrgTemplates",
+      "in_folder": false,
+      "suffix": "dataObjectBuildOrgTemplate"
+    },
+    "DataObjectSearchIndexConf": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataObjectSearchIndexConfs",
+      "in_folder": false,
+      "suffix": "dataObjectSearchIndexConf"
+    },
+    "DataPackageKitDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataPackageKitDefinitions",
+      "in_folder": false,
+      "suffix": "dataPackageKitDefinition"
+    },
+    "DataPackageKitObject": {
+      "adapter": "default",
+      "children": {},
+      "directory": "DataPackageKitObjects",
+      "in_folder": false,
+      "suffix": "DataPackageKitObject"
+    },
+    "DataPipeline": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "dataPipelines",
+      "in_folder": false,
+      "suffix": "dataPipeline"
+    },
+    "DataSource": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mktDataSources",
+      "in_folder": false,
+      "suffix": "dataSource"
+    },
+    "DataSourceBundleDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataSourceBundleDefinitions",
+      "in_folder": false,
+      "suffix": "dataSourceBundleDefinition"
+    },
+    "DataSourceObject": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataSourceObjects",
+      "in_folder": false,
+      "suffix": "dataSourceObject"
+    },
+    "DataSourceTenant": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataSourceTenants",
+      "in_folder": false,
+      "suffix": "dataSourceTenant"
+    },
+    "DataSrcDataModelFieldMap": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataSrcDataModelFieldMaps",
+      "in_folder": false,
+      "suffix": "dataSrcDataModelFieldMap"
+    },
+    "DataStreamDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataStreamDefinitions",
+      "in_folder": false,
+      "suffix": "dataStreamDefinition"
+    },
+    "DataStreamTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataStreamTemplates",
+      "in_folder": false,
+      "suffix": "dataStreamTemplate"
+    },
+    "DataWeaveResource": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "dw",
+      "in_folder": false,
+      "suffix": "dwl"
+    },
+    "DecisionMatrixDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "decisionMatrixDefinition",
+      "in_folder": false,
+      "suffix": "decisionMatrixDefinition"
+    },
+    "DecisionMatrixDefinitionVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "decisionMatrixVersion",
+      "in_folder": false,
+      "suffix": "decisionMatrixVersion"
+    },
+    "DecisionTable": {
+      "adapter": "default",
+      "children": {},
+      "directory": "decisionTables",
+      "in_folder": false,
+      "suffix": "decisionTable"
+    },
+    "DecisionTableDatasetLink": {
+      "adapter": "default",
+      "children": {},
+      "directory": "decisionTableDatasetLinks",
+      "in_folder": false,
+      "suffix": "decisionTableDatasetLink"
+    },
+    "DelegateGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "delegateGroups",
+      "in_folder": false,
+      "suffix": "delegateGroup"
+    },
+    "DgtAssetMgmtProvider": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dgtAssetMgmtProviders",
+      "in_folder": false,
+      "suffix": "dgtAssetMgmtProvider"
+    },
+    "DgtAssetMgmtPrvdLghtCpnt": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dgtAssetMgmtPrvdLghtCpnts",
+      "in_folder": false,
+      "suffix": "dgtAssetMgmtPrvdLghtCpnt"
+    },
+    "DigitalExperienceBundle": {
+      "adapter": "digitalExperience",
+      "children": {
+        "digitalexperience": {
+          "directory": "digitalExperiences",
+          "ignore_parent_name": false,
+          "name": "DigitalExperience",
+          "suffix": "digitalExperience",
+          "xml_element": "digitalExperiences"
+        }
+      },
+      "directory": "digitalExperiences",
+      "in_folder": false,
+      "suffix": "digitalExperience"
+    },
+    "DigitalExperienceConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "digitalExperienceConfigs",
+      "in_folder": false,
+      "suffix": "digitalExperienceConfig"
+    },
+    "DisclosureDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "disclosureDefinitions",
+      "in_folder": false,
+      "suffix": "disclosureDefinition"
+    },
+    "DisclosureDefinitionVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "disclosureDefinitionVersions",
+      "in_folder": false,
+      "suffix": "disclosureDefinitionVersion"
+    },
+    "DisclosureType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "disclosureTypes",
+      "in_folder": false,
+      "suffix": "disclosureType"
+    },
+    "DiscoveryAIModel": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "discovery",
+      "in_folder": false,
+      "suffix": "model"
+    },
+    "DiscoveryGoal": {
+      "adapter": "default",
+      "children": {},
+      "directory": "discovery",
+      "in_folder": false,
+      "suffix": "goal"
+    },
+    "DiscoveryStory": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "discovery",
+      "in_folder": false,
+      "suffix": "story"
+    },
+    "Document": {
+      "adapter": "mixedContent",
+      "children": {},
+      "directory": "documents",
+      "in_folder": true,
+      "suffix": "document"
+    },
+    "DocumentCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "documentCategory",
+      "in_folder": false,
+      "suffix": "documentCategory"
+    },
+    "DocumentCategoryDocumentType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "documentCategoryDocumentTypes",
+      "in_folder": false,
+      "suffix": "documentCategoryDocumentType"
+    },
+    "DocumentFolder": {
+      "adapter": "default",
+      "children": {},
+      "directory": "documents",
+      "in_folder": false,
+      "suffix": "documentFolder"
+    },
+    "DocumentGenerationSetting": {
+      "adapter": "default",
+      "children": {},
+      "directory": "documentGenerationSettings",
+      "in_folder": false,
+      "suffix": "documentGenerationSetting"
+    },
+    "DocumentTemplate": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "documentTemplates",
+      "in_folder": false,
+      "suffix": "dt"
+    },
+    "DocumentType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "documentTypes",
+      "in_folder": false,
+      "suffix": "documentType"
+    },
+    "DuplicateRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "duplicateRules",
+      "in_folder": false,
+      "suffix": "duplicateRule"
+    },
+    "DynamicTrigger": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dynamicTriggers",
+      "in_folder": false,
+      "suffix": "dynamicTrigger"
+    },
+    "DynamicUiCardDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dynamicUiCardDefinitions",
+      "in_folder": false,
+      "suffix": "dynamicUiCardDefinition"
+    },
+    "ESignatureConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "eSignatureConfigs",
+      "in_folder": false,
+      "suffix": "eSignatureConfig"
+    },
+    "ESignatureEnvelopeConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "eSignatureEnvelopeConfigs",
+      "in_folder": false,
+      "suffix": "eSignatureEnvelopeConfig"
+    },
+    "EclairGeoData": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "eclair",
+      "in_folder": false,
+      "suffix": "geodata"
+    },
+    "EmailFolder": {
+      "adapter": "default",
+      "children": {},
+      "directory": "email",
+      "in_folder": false,
+      "suffix": "emailFolder"
+    },
+    "EmailServicesFunction": {
+      "adapter": "default",
+      "children": {},
+      "directory": "emailservices",
+      "in_folder": false,
+      "suffix": "xml"
+    },
+    "EmailTemplate": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "email",
+      "in_folder": true,
+      "suffix": "email"
+    },
+    "EmailTemplateFolder": {
+      "adapter": "default",
+      "children": {},
+      "directory": "email",
+      "in_folder": false,
+      "suffix": "emailTemplateFolder"
+    },
+    "EmbeddedServiceBranding": {
+      "adapter": "default",
+      "children": {},
+      "directory": "EmbeddedServiceBranding",
+      "in_folder": false,
+      "suffix": "EmbeddedServiceBranding"
+    },
+    "EmbeddedServiceConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "EmbeddedServiceConfig",
+      "in_folder": false,
+      "suffix": "EmbeddedServiceConfig"
+    },
+    "EmbeddedServiceFieldService": {
+      "adapter": "default",
+      "children": {},
+      "directory": "EmbeddedServiceFieldService",
+      "in_folder": false,
+      "suffix": "EmbeddedServiceFieldService"
+    },
+    "EmbeddedServiceFlowConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "EmbeddedServiceFlowConfig",
+      "in_folder": false,
+      "suffix": "EmbeddedServiceFlowConfig"
+    },
+    "EmbeddedServiceLiveAgent": {
+      "adapter": "default",
+      "children": {},
+      "directory": "EmbeddedServiceLiveAgent",
+      "in_folder": false,
+      "suffix": "EmbeddedServiceLiveAgent"
+    },
+    "EmbeddedServiceMenuSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "EmbeddedServiceMenuSettings",
+      "in_folder": false,
+      "suffix": "EmbeddedServiceMenuSettings"
+    },
+    "EmployeeDataSyncProfile": {
+      "adapter": "default",
+      "children": {},
+      "directory": "employeeDataSyncProfiles",
+      "in_folder": false,
+      "suffix": "employeeDataSyncProfile"
+    },
+    "EnablementMeasureDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "enablementMeasureDefinitions",
+      "in_folder": false,
+      "suffix": "enablementMeasureDefinition"
+    },
+    "EnablementProgramDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "enablementProgramDefinitions",
+      "in_folder": false,
+      "suffix": "enablementProgramDefinition"
+    },
+    "EnblProgramTaskSubCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "enblProgramTaskSubCategories",
+      "in_folder": false,
+      "suffix": "enblProgramTaskSubCategory"
+    },
+    "EntitlementProcess": {
+      "adapter": "default",
+      "children": {},
+      "directory": "entitlementProcesses",
+      "in_folder": false,
+      "suffix": "entitlementProcess"
+    },
+    "EntitlementTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "entitlementTemplates",
+      "in_folder": false,
+      "suffix": "entitlementTemplate"
+    },
+    "EntityImplements": {
+      "adapter": "default",
+      "children": {},
+      "directory": "entityImplements",
+      "in_folder": false,
+      "suffix": "entityImplements"
+    },
+    "EscalationRules": {
+      "adapter": "default",
+      "children": {
+        "escalationrule": {
+          "directory": "escalationRules",
+          "ignore_parent_name": false,
+          "name": "EscalationRule",
+          "suffix": "escalationRule",
+          "xml_element": "escalationRule"
+        }
+      },
+      "directory": "escalationRules",
+      "in_folder": false,
+      "suffix": "escalationRules"
+    },
+    "EventDelivery": {
+      "adapter": "default",
+      "children": {},
+      "directory": "eventDeliveries",
+      "in_folder": false,
+      "suffix": "delivery"
+    },
+    "EventRelayConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "eventRelays",
+      "in_folder": false,
+      "suffix": "eventRelay"
+    },
+    "EventSubscription": {
+      "adapter": "default",
+      "children": {},
+      "directory": "eventSubscriptions",
+      "in_folder": false,
+      "suffix": "subscription"
+    },
+    "EventType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "eventTypes",
+      "in_folder": false,
+      "suffix": "eventType"
+    },
+    "ExperienceBundle": {
+      "adapter": "mixedContent",
+      "children": {},
+      "directory": "experiences",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "ExperiencePropertyTypeBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "experiencePropertyTypeBundles",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "ExplainabilityActionDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ExplainabilityActionDefinitions",
+      "in_folder": false,
+      "suffix": "explainabilityActionDefinition"
+    },
+    "ExplainabilityActionVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ExplainabilityActionVersions",
+      "in_folder": false,
+      "suffix": "explainabilityActionVersion"
+    },
+    "ExplainabilityMsgTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ExplainabilityMsgTemplates",
+      "in_folder": false,
+      "suffix": "explainabilityMsgTemplate"
+    },
+    "ExpressionSetDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "expressionSetDefinition",
+      "in_folder": false,
+      "suffix": "expressionSetDefinition"
+    },
+    "ExpressionSetDefinitionVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "expressionSetVersion",
+      "in_folder": false,
+      "suffix": "expressionSetVersion"
+    },
+    "ExpressionSetMessageToken": {
+      "adapter": "default",
+      "children": {},
+      "directory": "expressionSetMessageToken",
+      "in_folder": false,
+      "suffix": "expressionSetMessageToken"
+    },
+    "ExpressionSetObjectAlias": {
+      "adapter": "default",
+      "children": {},
+      "directory": "expressionSetObjectAlias",
+      "in_folder": false,
+      "suffix": "expressionSetObjectAlias"
+    },
+    "ExtDataTranObjectTemplate": {
+      "adapter": "default",
+      "children": {
+        "extdatatranfieldtemplate": {
+          "directory": "extDataTranFieldTemplates",
+          "ignore_parent_name": false,
+          "name": "extDataTranFieldTemplate",
+          "suffix": "extDataTranFieldTemplate",
+          "xml_element": "extDataTranFieldTemplates"
+        }
+      },
+      "directory": "extDataTranObjectTemplates",
+      "in_folder": false,
+      "suffix": "extDataTranObjectTemplate"
+    },
+    "ExternalAIModel": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalAIModels",
+      "in_folder": false,
+      "suffix": "externalAIModel"
+    },
+    "ExternalAuthIdentityProvider": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalAuthIdentityProviders",
+      "in_folder": false,
+      "suffix": "externalAuthIdentityProvider"
+    },
+    "ExternalClientApplication": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalClientApps",
+      "in_folder": false,
+      "suffix": "eca"
+    },
+    "ExternalCredential": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalCredentials",
+      "in_folder": false,
+      "suffix": "externalCredential"
+    },
+    "ExternalDataConnector": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalDataConnectors",
+      "in_folder": false,
+      "suffix": "externalDataConnector"
+    },
+    "ExternalDataSource": {
+      "adapter": "default",
+      "children": {},
+      "directory": "dataSources",
+      "in_folder": false,
+      "suffix": "dataSource"
+    },
+    "ExternalDataTranObject": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalDataTranObjects",
+      "in_folder": false,
+      "suffix": "externalDataTranObject"
+    },
+    "ExternalDocStorageConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalDocStorageConfigs",
+      "in_folder": false,
+      "suffix": "externalDocStorageConfig"
+    },
+    "ExternalServiceRegistration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "externalServiceRegistrations",
+      "in_folder": false,
+      "suffix": "externalServiceRegistration"
+    },
+    "ExternalStoragePrvdConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ExternalStoragePrvdConfig",
+      "in_folder": false,
+      "suffix": "ExternalStoragePrvdConfigSet"
+    },
+    "ExtlClntAppCanvasSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppCanvasSettings",
+      "in_folder": false,
+      "suffix": "ecaCanvas"
+    },
+    "ExtlClntAppConfigurablePolicies": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppPolicies",
+      "in_folder": false,
+      "suffix": "ecaPlcy"
+    },
+    "ExtlClntAppGlobalOauthSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppGlobalOauthSets",
+      "in_folder": false,
+      "suffix": "ecaGlblOauth"
+    },
+    "ExtlClntAppMobileConfigurablePolicies": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppMobilePolicies",
+      "in_folder": false,
+      "suffix": "ecaMobilePlcy"
+    },
+    "ExtlClntAppMobileSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppMobileSettings",
+      "in_folder": false,
+      "suffix": "ecaMobile"
+    },
+    "ExtlClntAppNotificationSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppNotifSettings",
+      "in_folder": false,
+      "suffix": "ecaNotifications"
+    },
+    "ExtlClntAppOauthConfigurablePolicies": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppOauthPolicies",
+      "in_folder": false,
+      "suffix": "ecaOauthPlcy"
+    },
+    "ExtlClntAppOauthSecuritySettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppOauthSecuritySettings",
+      "in_folder": false,
+      "suffix": "ecaOauthSecurity"
+    },
+    "ExtlClntAppOauthSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppOauthSettings",
+      "in_folder": false,
+      "suffix": "ecaOauth"
+    },
+    "ExtlClntAppPushConfigurablePolicies": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppPushPolicies",
+      "in_folder": false,
+      "suffix": "ecaPushPlcy"
+    },
+    "ExtlClntAppPushSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppPushSettings",
+      "in_folder": false,
+      "suffix": "ecaPush"
+    },
+    "ExtlClntAppSamlConfigurablePolicies": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppSamlConfigurablePolicies",
+      "in_folder": false,
+      "suffix": "ecaSamlPlcy"
+    },
+    "ExtlClntAppSampleConfigurablePolicies": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppSamplePolicies",
+      "in_folder": false,
+      "suffix": "ecaSmplPlcy"
+    },
+    "ExtlClntAppSampleSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "extlClntAppSampleSettings",
+      "in_folder": false,
+      "suffix": "ecaSmpl"
+    },
+    "FeatureParameterBoolean": {
+      "adapter": "default",
+      "children": {},
+      "directory": "featureParameters",
+      "in_folder": false,
+      "suffix": "featureParameterBoolean"
+    },
+    "FeatureParameterDate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "featureParameters",
+      "in_folder": false,
+      "suffix": "featureParameterDate"
+    },
+    "FeatureParameterInteger": {
+      "adapter": "default",
+      "children": {},
+      "directory": "featureParameters",
+      "in_folder": false,
+      "suffix": "featureParameterInteger"
+    },
+    "FieldMappingConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fieldMappingConfigs",
+      "in_folder": false,
+      "suffix": "fieldMappingConfig"
+    },
+    "FieldRestrictionRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fieldRestrictionRules",
+      "in_folder": false,
+      "suffix": "rule"
+    },
+    "FieldServiceMobileConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fieldServiceMobileConfigs",
+      "in_folder": false,
+      "suffix": "fieldServiceMobileConfig"
+    },
+    "FieldServiceMobileExtension": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fieldServiceMobileExtensions",
+      "in_folder": false,
+      "suffix": "fieldServiceMobileExtension"
+    },
+    "FieldSrcTrgtRelationship": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fieldSrcTrgtRelationships",
+      "in_folder": false,
+      "suffix": "fieldSrcTrgtRelationship"
+    },
+    "FlexcardDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flexcardDefinitions",
+      "in_folder": false,
+      "suffix": "flexcardDefinition"
+    },
+    "FlexiPage": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flexipages",
+      "in_folder": false,
+      "suffix": "flexipage"
+    },
+    "Flow": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flows",
+      "in_folder": false,
+      "suffix": "flow"
+    },
+    "FlowCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flowCategories",
+      "in_folder": false,
+      "suffix": "flowCategory"
+    },
+    "FlowDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flowDefinitions",
+      "in_folder": false,
+      "suffix": "flowDefinition"
+    },
+    "FlowTest": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flowtests",
+      "in_folder": false,
+      "suffix": "flowtest"
+    },
+    "FlowValueMap": {
+      "adapter": "default",
+      "children": {},
+      "directory": "flowValueMaps",
+      "in_folder": false,
+      "suffix": "flowvaluemap"
+    },
+    "ForecastingFilter": {
+      "adapter": "default",
+      "children": {},
+      "directory": "forecastingFilters",
+      "in_folder": false,
+      "suffix": "forecastingFilter"
+    },
+    "ForecastingFilterCondition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "forecastingFilterConditions",
+      "in_folder": false,
+      "suffix": "forecastingFilterCondition"
+    },
+    "ForecastingGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "forecastingGroups",
+      "in_folder": false,
+      "suffix": "forecastingGroup"
+    },
+    "ForecastingSourceDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "forecastingSourceDefinitions",
+      "in_folder": false,
+      "suffix": "forecastingSourceDefinition"
+    },
+    "ForecastingType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "forecastingTypes",
+      "in_folder": false,
+      "suffix": "forecastingType"
+    },
+    "ForecastingTypeSource": {
+      "adapter": "default",
+      "children": {},
+      "directory": "forecastingTypeSources",
+      "in_folder": false,
+      "suffix": "forecastingTypeSource"
+    },
+    "Form": {
+      "adapter": "default",
+      "children": {
+        "formsection": {
+          "directory": "formSections",
+          "ignore_parent_name": false,
+          "name": "FormSection",
+          "suffix": "formSection",
+          "xml_element": "formSections"
+        }
+      },
+      "directory": "forms",
+      "in_folder": false,
+      "suffix": "form"
+    },
+    "FuelType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fuelTypes",
+      "in_folder": false,
+      "suffix": "fuelType"
+    },
+    "FuelTypeSustnUom": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fuelTypeSustnUoms",
+      "in_folder": false,
+      "suffix": "fuelTypeSustnUom"
+    },
+    "FunctionReference": {
+      "adapter": "default",
+      "children": {},
+      "directory": "functions",
+      "in_folder": false,
+      "suffix": "function"
+    },
+    "FundraisingConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "fundraisingConfigs",
+      "in_folder": false,
+      "suffix": "fundraisingConfig"
+    },
+    "GatewayProviderPaymentMethodType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "gatewayProviderPaymentMethodTypes",
+      "in_folder": false,
+      "suffix": "gatewayProviderPaymentMethodType"
+    },
+    "GenAiFunction": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "genAiFunctions",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "GenAiPlanner": {
+      "adapter": "default",
+      "children": {},
+      "directory": "genAiPlanners",
+      "in_folder": false,
+      "suffix": "genAiPlanner"
+    },
+    "GenAiPlannerBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "genAiPlannerBundles",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "GenAiPlugin": {
+      "adapter": "default",
+      "children": {},
+      "directory": "genAiPlugins",
+      "in_folder": false,
+      "suffix": "genAiPlugin"
+    },
+    "GenAiPromptTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "genAiPromptTemplates",
+      "in_folder": false,
+      "suffix": "genAiPromptTemplate"
+    },
+    "GenAiPromptTemplateActv": {
+      "adapter": "default",
+      "children": {},
+      "directory": "genAiPromptTemplateActivations",
+      "in_folder": false,
+      "suffix": "genAiPromptTemplateActivation"
+    },
+    "GiftEntryGridTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "giftEntryGridTemplates",
+      "in_folder": false,
+      "suffix": "giftEntryGridTemplate"
+    },
+    "GlobalPicklist": {
+      "adapter": "default",
+      "children": {},
+      "directory": "globalPicklists",
+      "in_folder": false,
+      "suffix": "globalPicklist"
+    },
+    "GlobalValueSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "globalValueSets",
+      "in_folder": false,
+      "suffix": "globalValueSet"
+    },
+    "GlobalValueSetTranslation": {
+      "adapter": "default",
+      "children": {},
+      "directory": "globalValueSetTranslations",
+      "in_folder": false,
+      "suffix": "globalValueSetTranslation"
+    },
+    "Group": {
+      "adapter": "default",
+      "children": {},
+      "directory": "groups",
+      "in_folder": false,
+      "suffix": "group"
+    },
+    "HomePageComponent": {
+      "adapter": "default",
+      "children": {},
+      "directory": "homePageComponents",
+      "in_folder": false,
+      "suffix": "homePageComponent"
+    },
+    "HomePageLayout": {
+      "adapter": "default",
+      "children": {},
+      "directory": "homePageLayouts",
+      "in_folder": false,
+      "suffix": "homePageLayout"
+    },
+    "HouseholdNamingConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "householdNamingConfigs",
+      "in_folder": false,
+      "suffix": "householdNamingConfig"
+    },
+    "IPAddressRange": {
+      "adapter": "default",
+      "children": {},
+      "directory": "IPAddressRanges",
+      "in_folder": false,
+      "suffix": "IPAddressRange"
+    },
+    "Icon": {
+      "adapter": "default",
+      "children": {},
+      "directory": "icons",
+      "in_folder": false,
+      "suffix": "icon"
+    },
+    "IdentityVerificationProcDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "IdentityVerificationProcDefs",
+      "in_folder": false,
+      "suffix": "IdentityVerificationProcDef"
+    },
+    "IdpConfiguration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "idpConfigurations",
+      "in_folder": false,
+      "suffix": "idpConfiguration"
+    },
+    "IframeWhiteListUrlSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "iframeWhiteListUrlSettings",
+      "in_folder": false,
+      "suffix": "iframeWhiteListUrlSettings"
+    },
+    "InboundCertificate": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "inboundCertificates",
+      "in_folder": false,
+      "suffix": "inboundCertificate"
+    },
+    "InboundNetworkConnection": {
+      "adapter": "default",
+      "children": {},
+      "directory": "inboundNetworkConnections",
+      "in_folder": false,
+      "suffix": "inboundNetworkConnection"
+    },
+    "IndustriesManufacturingSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "IndustriesManufacturingSettings",
+      "in_folder": false,
+      "suffix": "settings"
+    },
+    "InsightType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "insightTypes",
+      "in_folder": false,
+      "suffix": "insightType"
+    },
+    "InstalledPackage": {
+      "adapter": "default",
+      "children": {},
+      "directory": "installedPackages",
+      "in_folder": false,
+      "suffix": "installedPackage"
+    },
+    "IntegArtifactDef": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "integArtifactDefs",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "IntegrationHubSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "integrationHub",
+      "in_folder": false,
+      "suffix": "settings"
+    },
+    "IntegrationHubSettingsType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "integrationHub",
+      "in_folder": false,
+      "suffix": "type"
+    },
+    "IntegrationProcdDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "integrationProcdDefinitions",
+      "in_folder": false,
+      "suffix": "integrationProcdDefinition"
+    },
+    "IntegrationProviderDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "integrationProviderDefinitions",
+      "in_folder": false,
+      "suffix": "integrationProviderDefinition"
+    },
+    "InternalDataConnector": {
+      "adapter": "default",
+      "children": {},
+      "directory": "internalDataConnectors",
+      "in_folder": false,
+      "suffix": "internalDataConnector"
+    },
+    "InternalOrganization": {
+      "adapter": "default",
+      "children": {},
+      "directory": "internalOrganizations",
+      "in_folder": false,
+      "suffix": "internalOrganization"
+    },
+    "InvocableActionExtension": {
+      "adapter": "default",
+      "children": {},
+      "directory": "invocableactionextensions",
+      "in_folder": false,
+      "suffix": "invocableactionextension"
+    },
+    "KeywordList": {
+      "adapter": "default",
+      "children": {},
+      "directory": "moderation",
+      "in_folder": false,
+      "suffix": "keywords"
+    },
+    "Layout": {
+      "adapter": "default",
+      "children": {},
+      "directory": "layouts",
+      "in_folder": false,
+      "suffix": "layout"
+    },
+    "LeadConvertSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "LeadConvertSettings",
+      "in_folder": false,
+      "suffix": "LeadConvertSetting"
+    },
+    "LearningAchievementConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "learningAchievementConfigs",
+      "in_folder": false,
+      "suffix": "learningAchievementConfig"
+    },
+    "LearningItemType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "learningItemTypes",
+      "in_folder": false,
+      "suffix": "learningItemType"
+    },
+    "Letterhead": {
+      "adapter": "default",
+      "children": {},
+      "directory": "letterhead",
+      "in_folder": false,
+      "suffix": "letter"
+    },
+    "LicenseDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "licenseDefinitions",
+      "in_folder": false,
+      "suffix": "licenseDefinition"
+    },
+    "LifeSciConfigCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "lifeSciConfigCategories",
+      "in_folder": false,
+      "suffix": "lifeSciConfigCategory"
+    },
+    "LifeSciConfigRecord": {
+      "adapter": "default",
+      "children": {},
+      "directory": "lifeSciConfigRecords",
+      "in_folder": false,
+      "suffix": "lifeSciConfigRecord"
+    },
+    "LightningBolt": {
+      "adapter": "default",
+      "children": {},
+      "directory": "lightningBolts",
+      "in_folder": false,
+      "suffix": "lightningBolt"
+    },
+    "LightningComponentBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "lwc",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "LightningExperienceTheme": {
+      "adapter": "default",
+      "children": {},
+      "directory": "lightningExperienceThemes",
+      "in_folder": false,
+      "suffix": "lightningExperienceTheme"
+    },
+    "LightningMessageChannel": {
+      "adapter": "default",
+      "children": {},
+      "directory": "messageChannels",
+      "in_folder": false,
+      "suffix": "messageChannel"
+    },
+    "LightningOnboardingConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "lightningOnboardingConfigs",
+      "in_folder": false,
+      "suffix": "lightningOnboardingConfig"
+    },
+    "LightningOutApp": {
+      "adapter": "default",
+      "children": {},
+      "directory": "lightningOutApps",
+      "in_folder": false,
+      "suffix": "lightningOutApp"
+    },
+    "LightningTypeBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "lightningTypes",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "LiveChatAgentConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "liveChatAgentConfigs",
+      "in_folder": false,
+      "suffix": "liveChatAgentConfig"
+    },
+    "LiveChatButton": {
+      "adapter": "default",
+      "children": {},
+      "directory": "liveChatButtons",
+      "in_folder": false,
+      "suffix": "liveChatButton"
+    },
+    "LiveChatDeployment": {
+      "adapter": "default",
+      "children": {},
+      "directory": "liveChatDeployments",
+      "in_folder": false,
+      "suffix": "liveChatDeployment"
+    },
+    "LiveChatSensitiveDataRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "liveChatSensitiveDataRule",
+      "in_folder": false,
+      "suffix": "liveChatSensitiveDataRule"
+    },
+    "LocationUse": {
+      "adapter": "default",
+      "children": {},
+      "directory": "locationUses",
+      "in_folder": false,
+      "suffix": "locationUse"
+    },
+    "LoyaltyProgramSetup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "loyaltyProgramSetups",
+      "in_folder": false,
+      "suffix": "loyaltyProgramSetup"
+    },
+    "MLDataDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mlDataDefinitions",
+      "in_folder": false,
+      "suffix": "mlDataDefinition"
+    },
+    "MLPredictionDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mlPredictions",
+      "in_folder": false,
+      "suffix": "mlPrediction"
+    },
+    "MLRecommendationDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mlRecommendations",
+      "in_folder": false,
+      "suffix": "mlRecommendation"
+    },
+    "ManagedContentType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "managedContentTypes",
+      "in_folder": false,
+      "suffix": "managedContentType"
+    },
+    "ManagedEventSubscription": {
+      "adapter": "default",
+      "children": {},
+      "directory": "managedEventSubscriptions",
+      "in_folder": false,
+      "suffix": "managedEventSubscription"
+    },
+    "ManagedTopics": {
+      "adapter": "default",
+      "children": {
+        "managedtopic": {
+          "directory": "managedTopics",
+          "ignore_parent_name": false,
+          "name": "ManagedTopic",
+          "suffix": "managedTopic",
+          "xml_element": "managedTopics"
+        }
+      },
+      "directory": "managedTopics",
+      "in_folder": false,
+      "suffix": "managedTopics"
+    },
+    "MarketSegmentDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "marketSegmentDefinitions",
+      "in_folder": false,
+      "suffix": "marketSegmentDefinition"
+    },
+    "MarketingAppExtension": {
+      "adapter": "default",
+      "children": {},
+      "directory": "marketingappextensions",
+      "in_folder": false,
+      "suffix": "marketingappextension"
+    },
+    "MarketingResourceType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "marketingResourceType",
+      "in_folder": false,
+      "suffix": "marketingResourceType"
+    },
+    "MatchingRules": {
+      "adapter": "default",
+      "children": {
+        "matchingrule": {
+          "directory": "matchingRules",
+          "ignore_parent_name": false,
+          "name": "MatchingRule",
+          "suffix": "matchingRule",
+          "xml_element": "matchingRules"
+        }
+      },
+      "directory": "matchingRules",
+      "in_folder": false,
+      "suffix": "matchingRule"
+    },
+    "McpServerDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mcpServerDefinitions",
+      "in_folder": false,
+      "suffix": "mcpServerDefinition"
+    },
+    "MeetingPlaybookDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "meetingPlaybookDefinitions",
+      "in_folder": false,
+      "suffix": "meetingPlaybookDefinition"
+    },
+    "MessagingChannel": {
+      "adapter": "default",
+      "children": {},
+      "directory": "messagingChannels",
+      "in_folder": false,
+      "suffix": "messagingChannel"
+    },
+    "MfgProgramTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "MfgProgramTemplate",
+      "in_folder": false,
+      "suffix": "mfgProgramTemplate"
+    },
+    "MilestoneType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "milestoneTypes",
+      "in_folder": false,
+      "suffix": "milestoneType"
+    },
+    "MktCalcInsightObjectDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mktCalcInsightObjectDefs",
+      "in_folder": false,
+      "suffix": "mktCalcInsightObjectDef"
+    },
+    "MktDataConnection": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mktDataConnections",
+      "in_folder": false,
+      "suffix": "mktDataConnection"
+    },
+    "MktDataConnectionSrcParam": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mktDataConnectionSrcParams",
+      "in_folder": false,
+      "suffix": "mktDataConnectionSrcParam"
+    },
+    "MktDataTranObject": {
+      "adapter": "default",
+      "children": {
+        "mktdatatranfield": {
+          "directory": "mktDataTranFields",
+          "ignore_parent_name": false,
+          "name": "MktDataTranField",
+          "suffix": "mktDataTranField",
+          "xml_element": "mktDataTranFields"
+        }
+      },
+      "directory": "mktDataTranObjects",
+      "in_folder": false,
+      "suffix": "mktDataTranObject"
+    },
+    "MktDatalakeSrcKeyQualifier": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mktDatalakeSrcKeyQualifier",
+      "in_folder": false,
+      "suffix": "mktDatalakeSrcKeyQualifier"
+    },
+    "MlDomain": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mlDomains",
+      "in_folder": false,
+      "suffix": "mlDomain"
+    },
+    "MobSecurityCertPinConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mobSecurityCertPinConfigs",
+      "in_folder": false,
+      "suffix": "mobSecurityCertPinConfig"
+    },
+    "MobileApplicationDetail": {
+      "adapter": "default",
+      "children": {},
+      "directory": "MobileApplicationDetails",
+      "in_folder": false,
+      "suffix": "MobileApplicationDetail"
+    },
+    "MobileSecurityAssignment": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mobileSecurityAssignments",
+      "in_folder": false,
+      "suffix": "mobileSecurityAssignment"
+    },
+    "MobileSecurityPolicy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mobileSecurityPolicies",
+      "in_folder": false,
+      "suffix": "mobileSecurityPolicy"
+    },
+    "MobileSecurityPolicySet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mobileSecurityPolicySets",
+      "in_folder": false,
+      "suffix": "mobileSecurityPolicySet"
+    },
+    "ModerationRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "moderation",
+      "in_folder": false,
+      "suffix": "rule"
+    },
+    "MutingPermissionSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "mutingpermissionsets",
+      "in_folder": false,
+      "suffix": "mutingpermissionset"
+    },
+    "MyDomainDiscoverableLogin": {
+      "adapter": "default",
+      "children": {},
+      "directory": "myDomainDiscoverableLogins",
+      "in_folder": false,
+      "suffix": "myDomainDiscoverableLogin"
+    },
+    "NamedCredential": {
+      "adapter": "default",
+      "children": {},
+      "directory": "namedCredentials",
+      "in_folder": false,
+      "suffix": "namedCredential"
+    },
+    "NavigationMenu": {
+      "adapter": "default",
+      "children": {},
+      "directory": "navigationMenus",
+      "in_folder": false,
+      "suffix": "navigationMenu"
+    },
+    "Network": {
+      "adapter": "default",
+      "children": {},
+      "directory": "networks",
+      "in_folder": false,
+      "suffix": "network"
+    },
+    "NetworkBranding": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "networkBranding",
+      "in_folder": false,
+      "suffix": "networkBranding"
+    },
+    "NotificationTypeConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "notificationTypeConfig",
+      "in_folder": false,
+      "suffix": "config"
+    },
+    "OauthCustomScope": {
+      "adapter": "default",
+      "children": {},
+      "directory": "oauthcustomscopes",
+      "in_folder": false,
+      "suffix": "oauthcustomscope"
+    },
+    "OauthTokenExchangeHandler": {
+      "adapter": "default",
+      "children": {},
+      "directory": "oauthtokenexchangehandlers",
+      "in_folder": false,
+      "suffix": "oauthtokenexchangehandler"
+    },
+    "ObjIntegProviderDefMapping": {
+      "adapter": "default",
+      "children": {},
+      "directory": "objIntegProviderDefMappings",
+      "in_folder": false,
+      "suffix": "objIntegProviderDefMapping"
+    },
+    "ObjectHierarchyRelationship": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ObjectHierarchyRelationship",
+      "in_folder": false,
+      "suffix": "settings"
+    },
+    "ObjectSourceTargetMap": {
+      "adapter": "default",
+      "children": {},
+      "directory": "objectSourceTargetMaps",
+      "in_folder": false,
+      "suffix": "objectSourceTargetMap"
+    },
+    "OcrSampleDocument": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ocrSampleDocuments",
+      "in_folder": false,
+      "suffix": "ocrSampleDocument"
+    },
+    "OcrTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ocrTemplates",
+      "in_folder": false,
+      "suffix": "ocrTemplate"
+    },
+    "OmniDataTransform": {
+      "adapter": "default",
+      "children": {},
+      "directory": "omniDataTransforms",
+      "in_folder": false,
+      "suffix": "rpt"
+    },
+    "OmniExtTrackingDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "OmniExtTrackingDefs",
+      "in_folder": false,
+      "suffix": "OmniExtTrackingDef"
+    },
+    "OmniIntegrationProcedure": {
+      "adapter": "default",
+      "children": {},
+      "directory": "omniIntegrationProcedures",
+      "in_folder": false,
+      "suffix": "oip"
+    },
+    "OmniInteractionAccessConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "OmniInteractionAccessConfig",
+      "in_folder": false,
+      "suffix": "omniInteractionAccessConfig"
+    },
+    "OmniInteractionConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "OmniInteractionConfig",
+      "in_folder": false,
+      "suffix": "omniInteractionConfig"
+    },
+    "OmniScript": {
+      "adapter": "default",
+      "children": {},
+      "directory": "omniScripts",
+      "in_folder": false,
+      "suffix": "os"
+    },
+    "OmniSupervisorConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "omniSupervisorConfigs",
+      "in_folder": false,
+      "suffix": "omniSupervisorConfig"
+    },
+    "OmniTrackingGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "OmniTrackingGroups",
+      "in_folder": false,
+      "suffix": "OmniTrackingGroup"
+    },
+    "OmniUiCard": {
+      "adapter": "default",
+      "children": {},
+      "directory": "omniUiCard",
+      "in_folder": false,
+      "suffix": "ouc"
+    },
+    "OmniscriptDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "omniscriptDefinitions",
+      "in_folder": false,
+      "suffix": "omniscriptDefinition"
+    },
+    "OnboardingDataObjectGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "onboardingDataObjectGroups",
+      "in_folder": false,
+      "suffix": "onboardingDataObjectGroup"
+    },
+    "Orchestration": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "iot",
+      "in_folder": false,
+      "suffix": "orchestration"
+    },
+    "OrchestrationContext": {
+      "adapter": "default",
+      "children": {},
+      "directory": "iot",
+      "in_folder": false,
+      "suffix": "orchestrationContext"
+    },
+    "OutboundNetworkConnection": {
+      "adapter": "default",
+      "children": {},
+      "directory": "outboundNetworkConnections",
+      "in_folder": false,
+      "suffix": "outboundNetworkConnection"
+    },
+    "ParticipantRole": {
+      "adapter": "default",
+      "children": {},
+      "directory": "participantRoles",
+      "in_folder": false,
+      "suffix": "participantRole"
+    },
+    "PartyProfileDataObjectValidityDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "partyProfileDataObjectValidityDefinitions",
+      "in_folder": false,
+      "suffix": "partyProfileDataObjectValidityDefinition"
+    },
+    "PathAssistant": {
+      "adapter": "default",
+      "children": {},
+      "directory": "pathAssistants",
+      "in_folder": false,
+      "suffix": "pathAssistant"
+    },
+    "PaymentGatewayProvider": {
+      "adapter": "default",
+      "children": {},
+      "directory": "paymentGatewayProviders",
+      "in_folder": false,
+      "suffix": "paymentGatewayProvider"
+    },
+    "PermissionSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "permissionsets",
+      "in_folder": false,
+      "suffix": "permissionset"
+    },
+    "PermissionSetGroup": {
+      "adapter": "default",
+      "children": {},
+      "directory": "permissionsetgroups",
+      "in_folder": false,
+      "suffix": "permissionsetgroup"
+    },
+    "PermissionSetLicenseDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "permissionSetLicenseDefinitions",
+      "in_folder": false,
+      "suffix": "permissionSetLicenseDefinition"
+    },
+    "PersonAccountOwnerPowerUser": {
+      "adapter": "default",
+      "children": {},
+      "directory": "personAccountOwnerPowerUsers",
+      "in_folder": false,
+      "suffix": "personAccountOwnerPowerUser"
+    },
+    "PipelineInspMetricConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "pipelineInspMetricConfigs",
+      "in_folder": false,
+      "suffix": "pipelineInspMetricConfig"
+    },
+    "PlatformCachePartition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "cachePartitions",
+      "in_folder": false,
+      "suffix": "cachePartition"
+    },
+    "PlatformEventChannel": {
+      "adapter": "default",
+      "children": {},
+      "directory": "platformEventChannels",
+      "in_folder": false,
+      "suffix": "platformEventChannel"
+    },
+    "PlatformEventChannelMember": {
+      "adapter": "default",
+      "children": {},
+      "directory": "platformEventChannelMembers",
+      "in_folder": false,
+      "suffix": "platformEventChannelMember"
+    },
+    "PlatformEventSubscriberConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "PlatformEventSubscriberConfigs",
+      "in_folder": false,
+      "suffix": "platformEventSubscriberConfig"
+    },
+    "PolicyRuleDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "policyRuleDefinitions",
+      "in_folder": false,
+      "suffix": "policyRuleDefinition"
+    },
+    "PolicyRuleDefinitionSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "policyRuleDefinitionSets",
+      "in_folder": false,
+      "suffix": "policyRuleDefinitionSet"
+    },
+    "Portal": {
+      "adapter": "default",
+      "children": {},
+      "directory": "portals",
+      "in_folder": false,
+      "suffix": "portal"
+    },
+    "PortalDelegablePermissionSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "portalDelegablePermissionSet",
+      "in_folder": false,
+      "suffix": "portalDelegablePermissionSet"
+    },
+    "PostTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "postTemplates",
+      "in_folder": false,
+      "suffix": "postTemplate"
+    },
+    "PresenceDeclineReason": {
+      "adapter": "default",
+      "children": {},
+      "directory": "presenceDeclineReasons",
+      "in_folder": false,
+      "suffix": "presenceDeclineReason"
+    },
+    "PresenceUserConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "presenceUserConfigs",
+      "in_folder": false,
+      "suffix": "presenceUserConfig"
+    },
+    "PricingActionParameters": {
+      "adapter": "default",
+      "children": {},
+      "directory": "pricingActionParameters",
+      "in_folder": false,
+      "suffix": "pricingActionParameters"
+    },
+    "PricingRecipe": {
+      "adapter": "default",
+      "children": {},
+      "directory": "pricingRecipe",
+      "in_folder": false,
+      "suffix": "pricingRecipe"
+    },
+    "ProcedurePlanDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "procedurePlanDefinitions",
+      "in_folder": false,
+      "suffix": "procedurePlanDefinition"
+    },
+    "ProcessFlowMigration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "processflowmigrations",
+      "in_folder": false,
+      "suffix": "processflowmigration"
+    },
+    "ProductAttrDisplayConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "productAttrDisplayConfigs",
+      "in_folder": false,
+      "suffix": "productAttrDisplayConfig"
+    },
+    "ProductAttributeSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "productAttributeSets",
+      "in_folder": false,
+      "suffix": "productAttributeSet"
+    },
+    "ProductSpecificationRecType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "productSpecificationRecTypes",
+      "in_folder": false,
+      "suffix": "productSpecificationRecType"
+    },
+    "ProductSpecificationType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "productSpecificationTypes",
+      "in_folder": false,
+      "suffix": "productSpecificationType"
+    },
+    "ProductSpecificationTypeDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "productSpecificationTypeDefinitions",
+      "in_folder": false,
+      "suffix": "productSpecificationTypeDefinition"
+    },
+    "Profile": {
+      "adapter": "default",
+      "children": {},
+      "directory": "profiles",
+      "in_folder": false,
+      "suffix": "profile"
+    },
+    "ProfilePasswordPolicy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "profilePasswordPolicies",
+      "in_folder": false,
+      "suffix": "profilePasswordPolicy"
+    },
+    "ProfileSessionSetting": {
+      "adapter": "default",
+      "children": {},
+      "directory": "profileSessionSettings",
+      "in_folder": false,
+      "suffix": "profileSessionSetting"
+    },
+    "Prompt": {
+      "adapter": "default",
+      "children": {},
+      "directory": "prompts",
+      "in_folder": false,
+      "suffix": "prompt"
+    },
+    "PublicKeyCertificate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "PublicKeyCertificate",
+      "in_folder": false,
+      "suffix": "PublicKeyCertificate"
+    },
+    "PublicKeyCertificateSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "PublicKeyCertificateSet",
+      "in_folder": false,
+      "suffix": "PublicKeyCertificateSet"
+    },
+    "Queue": {
+      "adapter": "default",
+      "children": {},
+      "directory": "queues",
+      "in_folder": false,
+      "suffix": "queue"
+    },
+    "QueueRoutingConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "queueRoutingConfigs",
+      "in_folder": false,
+      "suffix": "queueRoutingConfig"
+    },
+    "QuickAction": {
+      "adapter": "default",
+      "children": {},
+      "directory": "quickActions",
+      "in_folder": false,
+      "suffix": "quickAction"
+    },
+    "RecAlrtDataSrcExpSetDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "recAlrtDataSrcExpSetDefs",
+      "in_folder": false,
+      "suffix": "recAlrtDataSrcExpSetDef"
+    },
+    "RecommendationStrategy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "recommendationStrategies",
+      "in_folder": false,
+      "suffix": "recommendationStrategy"
+    },
+    "RecordActionDeployment": {
+      "adapter": "default",
+      "children": {},
+      "directory": "recordActionDeployments",
+      "in_folder": false,
+      "suffix": "deployment"
+    },
+    "RecordAggregationDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "RecordAggregationDefinitions",
+      "in_folder": false,
+      "suffix": "RecordAggregationDefinition"
+    },
+    "RecordAlertCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "recordAlertCategories",
+      "in_folder": false,
+      "suffix": "recordAlertCategory"
+    },
+    "RecordAlertDataSource": {
+      "adapter": "default",
+      "children": {},
+      "directory": "recordAlertDataSources",
+      "in_folder": false,
+      "suffix": "recordAlertDataSource"
+    },
+    "RecordAlertTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "recordAlertTemplates",
+      "in_folder": false,
+      "suffix": "recordAlertTemplate"
+    },
+    "RedirectWhitelistUrl": {
+      "adapter": "default",
+      "children": {},
+      "directory": "redirectWhitelistUrls",
+      "in_folder": false,
+      "suffix": "redirectWhitelistUrl"
+    },
+    "ReferencedDashboard": {
+      "adapter": "default",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "refdash"
+    },
+    "RegisteredExternalService": {
+      "adapter": "default",
+      "children": {},
+      "directory": "registeredExternalServices",
+      "in_folder": false,
+      "suffix": "registeredExternalService"
+    },
+    "RelatedRecordAssocCriteria": {
+      "adapter": "default",
+      "children": {},
+      "directory": "relatedRecordAssocCriteria",
+      "in_folder": false,
+      "suffix": "relatedRecordAssocCriteria"
+    },
+    "RelationshipGraphDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "relationshipGraphDefinitions",
+      "in_folder": false,
+      "suffix": "relationshipGraphDefinition"
+    },
+    "RemoteSiteSetting": {
+      "adapter": "default",
+      "children": {},
+      "directory": "remoteSiteSettings",
+      "in_folder": false,
+      "suffix": "remoteSite"
+    },
+    "Report": {
+      "adapter": "default",
+      "children": {},
+      "directory": "reports",
+      "in_folder": true,
+      "suffix": "report"
+    },
+    "ReportFolder": {
+      "adapter": "default",
+      "children": {},
+      "directory": "reports",
+      "in_folder": false,
+      "suffix": "reportFolder"
+    },
+    "ReportType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "reportTypes",
+      "in_folder": false,
+      "suffix": "reportType"
+    },
+    "RestrictionRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "restrictionRules",
+      "in_folder": false,
+      "suffix": "rule"
+    },
+    "RetrievalSummaryDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "RetrievalSummaryDefinitions",
+      "in_folder": false,
+      "suffix": "RetrievalSummaryDefinition"
+    },
+    "Role": {
+      "adapter": "default",
+      "children": {},
+      "directory": "roles",
+      "in_folder": false,
+      "suffix": "role"
+    },
+    "RuleLibraryDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "ruleLibraryDefinition",
+      "in_folder": false,
+      "suffix": "ruleLibraryDefinition"
+    },
+    "SalesAgreementSettings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "salesAgreementSettings",
+      "in_folder": false,
+      "suffix": "salesAgreementSetting"
+    },
+    "SamlSsoConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "samlssoconfigs",
+      "in_folder": false,
+      "suffix": "samlssoconfig"
+    },
+    "SchedulingObjective": {
+      "adapter": "default",
+      "children": {},
+      "directory": "SchedulingObjectives",
+      "in_folder": false,
+      "suffix": "SchedulingObjective"
+    },
+    "SchedulingRule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "SchedulingRules",
+      "in_folder": false,
+      "suffix": "schedulingRule"
+    },
+    "Scontrol": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "scontrols",
+      "in_folder": false,
+      "suffix": "scf"
+    },
+    "ScoreCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "scoreCategories",
+      "in_folder": false,
+      "suffix": "scoreCategory"
+    },
+    "SearchCriteriaConfiguration": {
+      "adapter": "default",
+      "children": {},
+      "directory": "SearchCriteriaConfigurationSettings",
+      "in_folder": false,
+      "suffix": "SearchCriteriaConfigurationSetting"
+    },
+    "SearchCustomization": {
+      "adapter": "default",
+      "children": {},
+      "directory": "searchCustomizations",
+      "in_folder": false,
+      "suffix": "searchCustomization"
+    },
+    "SearchOrgWideObjectConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "searchOrgWideConfiguration",
+      "in_folder": false,
+      "suffix": "searchOrgWideObjectConfig"
+    },
+    "SearchableObjDataSyncInfo": {
+      "adapter": "default",
+      "children": {},
+      "directory": "SearchableObjDataSyncInfoSettings",
+      "in_folder": false,
+      "suffix": "SearchableObjDataSyncInfoSetting"
+    },
+    "ServiceAISetupDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "serviceAISetupDescriptions",
+      "in_folder": false,
+      "suffix": "serviceAISetupDescription"
+    },
+    "ServiceAISetupField": {
+      "adapter": "default",
+      "children": {},
+      "directory": "serviceAISetupFields",
+      "in_folder": false,
+      "suffix": "serviceAISetupField"
+    },
+    "ServiceChannel": {
+      "adapter": "default",
+      "children": {},
+      "directory": "serviceChannels",
+      "in_folder": false,
+      "suffix": "serviceChannel"
+    },
+    "ServicePresenceStatus": {
+      "adapter": "default",
+      "children": {},
+      "directory": "servicePresenceStatuses",
+      "in_folder": false,
+      "suffix": "servicePresenceStatus"
+    },
+    "ServiceProcess": {
+      "adapter": "default",
+      "children": {},
+      "directory": "serviceprocess",
+      "in_folder": false,
+      "suffix": "serviceprocess"
+    },
+    "Settings": {
+      "adapter": "default",
+      "children": {},
+      "directory": "settings",
+      "in_folder": false,
+      "suffix": "settings"
+    },
+    "SharingRules": {
+      "adapter": "default",
+      "children": {
+        "sharingcriteriarule": {
+          "directory": "sharingRules",
+          "ignore_parent_name": false,
+          "name": "SharingCriteriaRule",
+          "suffix": "sharingCriteriaRule",
+          "xml_element": "sharingCriteriaRules"
+        },
+        "sharingguestrule": {
+          "directory": "sharingRules",
+          "ignore_parent_name": false,
+          "name": "SharingGuestRule",
+          "suffix": "sharingGuestRule",
+          "xml_element": "sharingGuestRules"
+        },
+        "sharingownerrule": {
+          "directory": "sharingRules",
+          "ignore_parent_name": false,
+          "name": "SharingOwnerRule",
+          "suffix": "sharingOwnerRule",
+          "xml_element": "sharingOwnerRules"
+        },
+        "sharingterritoryrule": {
+          "directory": "sharingRules",
+          "ignore_parent_name": false,
+          "name": "SharingTerritoryRule",
+          "suffix": "sharingTerritoryRule",
+          "xml_element": "sharingTerritoryRules"
+        }
+      },
+      "directory": "sharingRules",
+      "in_folder": false,
+      "suffix": "sharingRules"
+    },
+    "SharingSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "sharingSets",
+      "in_folder": false,
+      "suffix": "sharingSet"
+    },
+    "SiteDotCom": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "siteDotComSites",
+      "in_folder": false,
+      "suffix": "site"
+    },
+    "Skill": {
+      "adapter": "default",
+      "children": {},
+      "directory": "skills",
+      "in_folder": false,
+      "suffix": "skill"
+    },
+    "SkillType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "skilltypes",
+      "in_folder": false,
+      "suffix": "skilltype"
+    },
+    "SlackApp": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "slackapps",
+      "in_folder": false,
+      "suffix": "slackapp"
+    },
+    "StageAssignment": {
+      "adapter": "default",
+      "children": {},
+      "directory": "stageAssignments",
+      "in_folder": false,
+      "suffix": "stageAssignment"
+    },
+    "StageDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "stageDefinitions",
+      "in_folder": false,
+      "suffix": "stageDefinition"
+    },
+    "StandardValueSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "standardValueSets",
+      "in_folder": false,
+      "suffix": "standardValueSet"
+    },
+    "StandardValueSetTranslation": {
+      "adapter": "default",
+      "children": {},
+      "directory": "standardValueSetTranslations",
+      "in_folder": false,
+      "suffix": "standardValueSetTranslation"
+    },
+    "StaticResource": {
+      "adapter": "mixedContent",
+      "children": {},
+      "directory": "staticresources",
+      "in_folder": false,
+      "suffix": "resource"
+    },
+    "StnryAssetEnvSrcCnfg": {
+      "adapter": "default",
+      "children": {},
+      "directory": "stationaryAssetEnvSourceConfigs",
+      "in_folder": false,
+      "suffix": "stationaryAssetEnvSourceConfig"
+    },
+    "StreamingAppDataConnector": {
+      "adapter": "default",
+      "children": {},
+      "directory": "streamingAppDataConnectors",
+      "in_folder": false,
+      "suffix": "streamingAppDataConnector"
+    },
+    "SustainabilityUom": {
+      "adapter": "default",
+      "children": {},
+      "directory": "sustainabilityUoms",
+      "in_folder": false,
+      "suffix": "sustainabilityUom"
+    },
+    "SustnUomConversion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "sustnUomConversions",
+      "in_folder": false,
+      "suffix": "sustnUomConversion"
+    },
+    "SvcCatalogCategory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "svcCatalogCategories",
+      "in_folder": false,
+      "suffix": "category"
+    },
+    "SvcCatalogFilterCondition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "svcCatalogFilterConditions",
+      "in_folder": false,
+      "suffix": "catalogFilterCondition"
+    },
+    "SvcCatalogFilterCriteria": {
+      "adapter": "default",
+      "children": {},
+      "directory": "svcCatalogFilterCriterias",
+      "in_folder": false,
+      "suffix": "catalogFilterCriteria"
+    },
+    "SvcCatalogFulfillmentFlow": {
+      "adapter": "default",
+      "children": {},
+      "directory": "svcCatalogFulfillmentFlows",
+      "in_folder": false,
+      "suffix": "fulfillmentFlow"
+    },
+    "SvcCatalogItemDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "svcCatalogItems",
+      "in_folder": false,
+      "suffix": "catalogItem"
+    },
+    "SvcCatalogItemDefFiltrCrit": {
+      "adapter": "default",
+      "children": {},
+      "directory": "svcCatalogItemDefFiltrCrits",
+      "in_folder": false,
+      "suffix": "catalogItemDefFiltrCrit"
+    },
+    "SynonymDictionary": {
+      "adapter": "default",
+      "children": {},
+      "directory": "synonymDictionaries",
+      "in_folder": false,
+      "suffix": "synonymDictionary"
+    },
+    "TelemetryActionDefStep": {
+      "adapter": "default",
+      "children": {},
+      "directory": "TelemetryActionDefSteps",
+      "in_folder": false,
+      "suffix": "TelemetryActionDefStep"
+    },
+    "TelemetryActionDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "TelemetryActionDefinitions",
+      "in_folder": false,
+      "suffix": "TelemetryActionDefinition"
+    },
+    "TelemetryActnDefStepAttr": {
+      "adapter": "default",
+      "children": {},
+      "directory": "TelemetryActnDefStepAttrs",
+      "in_folder": false,
+      "suffix": "TelemetryActnDefStepAttr"
+    },
+    "TelemetryDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "TelemetryDefinitions",
+      "in_folder": false,
+      "suffix": "TelemetryDefinition"
+    },
+    "TelemetryDefinitionVersion": {
+      "adapter": "default",
+      "children": {},
+      "directory": "TelemetryDefinitionVersions",
+      "in_folder": false,
+      "suffix": "TelemetryDefinitionVersion"
+    },
+    "Territory": {
+      "adapter": "default",
+      "children": {},
+      "directory": "territories",
+      "in_folder": false,
+      "suffix": "territory"
+    },
+    "Territory2": {
+      "adapter": "default",
+      "children": {},
+      "directory": "territories",
+      "in_folder": false,
+      "suffix": "territory2"
+    },
+    "Territory2Model": {
+      "adapter": "default",
+      "children": {},
+      "directory": "territory2Models",
+      "in_folder": false,
+      "suffix": "territory2Model"
+    },
+    "Territory2Rule": {
+      "adapter": "default",
+      "children": {},
+      "directory": "rules",
+      "in_folder": false,
+      "suffix": "territory2Rule"
+    },
+    "Territory2Type": {
+      "adapter": "default",
+      "children": {},
+      "directory": "territory2Types",
+      "in_folder": false,
+      "suffix": "territory2Type"
+    },
+    "TimeSheetTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "timeSheetTemplates",
+      "in_folder": false,
+      "suffix": "timeSheetTemplate"
+    },
+    "TimelineObjectDefinition": {
+      "adapter": "default",
+      "children": {},
+      "directory": "timelineObjectDefinitions",
+      "in_folder": false,
+      "suffix": "timelineObjectDefinition"
+    },
+    "TopicsForObjects": {
+      "adapter": "default",
+      "children": {},
+      "directory": "topicsForObjects",
+      "in_folder": false,
+      "suffix": "topicsForObjects"
+    },
+    "TransactionProcessingType": {
+      "adapter": "default",
+      "children": {},
+      "directory": "transactionProcessingTypes",
+      "in_folder": false,
+      "suffix": "transactionProcessingType"
+    },
+    "TransactionSecurityPolicy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "transactionSecurityPolicies",
+      "in_folder": false,
+      "suffix": "transactionSecurityPolicy"
+    },
+    "Translations": {
+      "adapter": "default",
+      "children": {},
+      "directory": "translations",
+      "in_folder": false,
+      "suffix": "translation"
+    },
+    "UIBundle": {
+      "adapter": "uiBundles",
+      "children": {},
+      "directory": "uiBundles",
+      "in_folder": false,
+      "suffix": "uibundle"
+    },
+    "UIObjectRelationConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "uiObjectRelationConfigs",
+      "in_folder": false,
+      "suffix": "uiObjectRelationConfig"
+    },
+    "UiFormatSpecificationSet": {
+      "adapter": "default",
+      "children": {},
+      "directory": "uiFormatSpecificationSets",
+      "in_folder": false,
+      "suffix": "uiFormatSpecificationSet"
+    },
+    "UiPlugin": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "uiplugins",
+      "in_folder": false,
+      "suffix": "uiplugin"
+    },
+    "UiPreviewMessageTabDef": {
+      "adapter": "default",
+      "children": {},
+      "directory": "uiPreviewMessageTabDefs",
+      "in_folder": false,
+      "suffix": "uiPreviewMessageTabDef"
+    },
+    "UiViewDefinition": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "uiviews",
+      "in_folder": false,
+      "suffix": "uiview"
+    },
+    "UiWidgetBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "uiWidgets",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "UserAccessPolicy": {
+      "adapter": "default",
+      "children": {},
+      "directory": "useraccesspolicies",
+      "in_folder": false,
+      "suffix": "useraccesspolicy"
+    },
+    "UserAuthCertificate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "userAuthCertificates",
+      "in_folder": false,
+      "suffix": "userAuthCertificate"
+    },
+    "UserCriteria": {
+      "adapter": "default",
+      "children": {},
+      "directory": "userCriteria",
+      "in_folder": false,
+      "suffix": "userCriteria"
+    },
+    "UserProfileSearchScope": {
+      "adapter": "default",
+      "children": {},
+      "directory": "userProfileSearchScopes",
+      "in_folder": false,
+      "suffix": "userProfileSearchScope"
+    },
+    "UserProvisioningConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "userProvisioningConfigs",
+      "in_folder": false,
+      "suffix": "userProvisioningConfig"
+    },
+    "VehicleAssetEmssnSrcCnfg": {
+      "adapter": "default",
+      "children": {},
+      "directory": "vehicleAssetEmssnSourceConfigs",
+      "in_folder": false,
+      "suffix": "vehicleAssetEmssnSourceConfig"
+    },
+    "ViewDefinition": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "viewdefinitions",
+      "in_folder": false,
+      "suffix": "view"
+    },
+    "VirtualVisitConfig": {
+      "adapter": "default",
+      "children": {},
+      "directory": "VirtualVisitConfigs",
+      "in_folder": false,
+      "suffix": "virtualVisitConfig"
+    },
+    "VisualizationPlugin": {
+      "adapter": "default",
+      "children": {},
+      "directory": "visualizationPlugins",
+      "in_folder": false,
+      "suffix": "visualizationPlugin"
+    },
+    "WaveAnalyticAssetCollection": {
+      "adapter": "default",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "collection"
+    },
+    "WaveApplication": {
+      "adapter": "default",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wapp"
+    },
+    "WaveComponent": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wcomp"
+    },
+    "WaveDashboard": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wdash"
+    },
+    "WaveDataflow": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wdf"
+    },
+    "WaveDataset": {
+      "adapter": "default",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wds"
+    },
+    "WaveLens": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wlens"
+    },
+    "WaveRecipe": {
+      "adapter": "matchingContentFile",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "wdpr"
+    },
+    "WaveTemplateBundle": {
+      "adapter": "bundle",
+      "children": {},
+      "directory": "waveTemplates",
+      "in_folder": false,
+      "suffix": ""
+    },
+    "WaveXmd": {
+      "adapter": "default",
+      "children": {},
+      "directory": "wave",
+      "in_folder": false,
+      "suffix": "xmd"
+    },
+    "WebStoreBundle": {
+      "adapter": "default",
+      "children": {},
+      "directory": "webStoreBundles",
+      "in_folder": false,
+      "suffix": "webStoreBundle"
+    },
+    "WebStoreTemplate": {
+      "adapter": "default",
+      "children": {},
+      "directory": "webStoreTemplates",
+      "in_folder": false,
+      "suffix": "webStoreTemplate"
+    },
+    "WorkSkillRouting": {
+      "adapter": "default",
+      "children": {
+        "workskillroutingattribute": {
+          "directory": "workSkillRoutingAttributes",
+          "ignore_parent_name": false,
+          "name": "WorkSkillRoutingAttribute",
+          "suffix": "workSkillRoutingAttribute",
+          "xml_element": "workSkillRoutingAttributes"
+        }
+      },
+      "directory": "workSkillRoutings",
+      "in_folder": false,
+      "suffix": "workSkillRouting"
+    },
+    "Workflow": {
+      "adapter": "default",
+      "children": {
+        "workflowalert": {
+          "directory": "workflowAlerts",
+          "ignore_parent_name": false,
+          "name": "WorkflowAlert",
+          "suffix": "workflowAlert",
+          "xml_element": "alerts"
+        },
+        "workflowfieldupdate": {
+          "directory": "workflowFieldUpdates",
+          "ignore_parent_name": false,
+          "name": "WorkflowFieldUpdate",
+          "suffix": "workflowFieldUpdate",
+          "xml_element": "fieldUpdates"
+        },
+        "workflowflowaction": {
+          "directory": "workflowFlowActions",
+          "ignore_parent_name": false,
+          "name": "WorkflowFlowAction",
+          "suffix": "workflowFlowAction",
+          "xml_element": "flowActions"
+        },
+        "workflowknowledgepublish": {
+          "directory": "workflowKnowledgePublishs",
+          "ignore_parent_name": false,
+          "name": "WorkflowKnowledgePublish",
+          "suffix": "workflowKnowledgePublish",
+          "xml_element": "knowledgePublishes"
+        },
+        "workflowoutboundmessage": {
+          "directory": "workflowOutboundMessages",
+          "ignore_parent_name": false,
+          "name": "WorkflowOutboundMessage",
+          "suffix": "workflowOutboundMessage",
+          "xml_element": "outboundMessages"
+        },
+        "workflowrule": {
+          "directory": "workflowRules",
+          "ignore_parent_name": false,
+          "name": "WorkflowRule",
+          "suffix": "workflowRule",
+          "xml_element": "rules"
+        },
+        "workflowsend": {
+          "directory": "workflowSends",
+          "ignore_parent_name": false,
+          "name": "WorkflowSend",
+          "suffix": "workflowSend",
+          "xml_element": "send"
+        },
+        "workflowtask": {
+          "directory": "workflowTasks",
+          "ignore_parent_name": false,
+          "name": "WorkflowTask",
+          "suffix": "workflowTask",
+          "xml_element": "tasks"
+        }
+      },
+      "directory": "workflows",
+      "in_folder": false,
+      "suffix": "workflow"
+    },
+    "WorkflowFlowAutomation": {
+      "adapter": "default",
+      "children": {},
+      "directory": "workflowFlowAutomations",
+      "in_folder": false,
+      "suffix": "workflowFlowAutomation"
+    },
+    "XOrgHub": {
+      "adapter": "default",
+      "children": {},
+      "directory": "xorghubs",
+      "in_folder": false,
+      "suffix": "xorghub"
+    }
+  }
+}
