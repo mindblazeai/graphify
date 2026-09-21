@@ -57,6 +57,62 @@ def test_overloaded_methods_and_local_variable_types():
     assert ("Caller.go()", "Service.run(Integer)") not in edges(graph, "calls")
 
 
+@pytest.mark.parametrize("declaration,access", [
+    ("List<Account> records", "records[0]"),
+    ("Account[] records", "records[0]"),
+    ("System.List<Account> records", "records.get(0)"),
+    ("Map<Id,Account> records", "records.get('id')"),
+    ("Map<Id,List<Account>> records", "records.get('id')[0]"),
+    ("List<List<Account>> records", "records[0].get(0)"),
+    ("Map<Id,Account> records", "records.values().get(0)"),
+])
+def test_collection_receivers_keep_element_fields_without_fake_method_calls(declaration, access):
+    graph = build_graph([*schema(), source("ApexClass", "Caller", f"""class Caller {{
+      void run({declaration}) {{ records.size(); {access}.Score__c = 1; String name = {access}.Name; }}
+    }}""")])
+    assert any(target == "Account.Score__c" for _, target in edges(graph, "writes"))
+    assert any(target == "Account.Name" for _, target in edges(graph, "reads"))
+    assert not any(e["relation"] == "calls" for e in graph["edges"])
+    assert not graph["diagnostics"]
+
+
+@pytest.mark.parametrize("operation", ["update records;", "Database.update(records);", "update records[0];", "Database.update(byId.values());"])
+def test_collection_dml_still_links_the_actual_sobject(operation):
+    graph = build_graph([*schema(), source("ApexClass", "Caller", f"class Caller {{ void run(List<Account> records, Map<Id,Account> byId) {{ {operation} }} }}")])
+    assert any(target == "Account" for _, target in edges(graph, "writes"))
+    assert not any("<" in e["target_name"] for e in graph["edges"] if e["target_kind"] == "CustomObject")
+
+
+def test_collection_overload_and_custom_get_method_are_not_filtered_as_platform_calls():
+    graph = build_graph([*schema(),
+        source("ApexClass", "Service", "class Service { void run(List<Account> items) {} void run(Account item) {} String get(Integer i) {return null;} }"),
+        source("ApexClass", "Caller", "class Caller { void run(List<Account> records, Service svc) { svc.run(records); svc.get(0); } }")])
+    assert ("Caller.run(List<Account>,Service)", "Service.run(List<Account>)") in edges(graph, "calls")
+    assert ("Caller.run(List<Account>,Service)", "Service.get(Integer)") in edges(graph, "calls")
+    assert not any(target == "Service.run(Account)" for _, target in edges(graph, "calls"))
+
+
+def test_unknown_custom_return_type_is_explicit_not_a_fabricated_field():
+    graph = build_graph([source("ApexClass", "Caller", "class Caller { void run() { String name = Factory.get().Name; } }")])
+    assert any(e["target_name"] == "Factory.get" for e in graph["edges"])
+    assert not any(e["target_kind"] == "FieldPath" for e in graph["edges"])
+    assert any(d["code"] == "apex_receiver_type_unresolved" for d in graph["diagnostics"])
+    assert graph["coverage"][0]["level"] == "partial"
+
+
+def test_new_collection_references_elements_without_fabricating_their_constructor():
+    graph = build_graph([*schema(), source("ApexClass", "Caller", "class Caller { void run() { List<Account> records = new List<Account>(); } }")])
+    assert any(target == "Account" for _, target in edges(graph, "references_type"))
+    assert not edges(graph, "constructs")
+
+
+def test_snapshot_source_order_is_stable_and_preserves_evidence():
+    sources = [*schema(), source("ApexClass", "Reader", "class Reader { void run(Account a) { a.Score__c = 1; update a; } }")]
+    a, b = build_graph(sources), build_graph(list(reversed(sources)))
+    assert a == b
+    assert a["edges"] == sorted(a["edges"], key=lambda e: (e["source_file"], e["source"], e["line"], e["id"]))
+
+
 def test_unknown_overload_is_ambiguous_and_never_claimed_resolved():
     graph = build_graph([
         source("ApexClass", "Service", "public class Service { public void run(String s) {} public void run(Integer n) {} }"),

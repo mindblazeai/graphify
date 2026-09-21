@@ -306,8 +306,11 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
               for level in ("semantic", "structural", "catalog", "partial", "unparsed")}
     result = {
         "schema_version": SCHEMA_VERSION, "engine_version": ENGINE_VERSION,
-        "nodes": sorted(nodes.values(), key=lambda n: n["id"]),
-        "edges": sorted(edges.values(), key=lambda e: e["id"]),
+        # Keep repeated source identities adjacent. Hash-ordering scattered
+        # each file's evidence across the entire snapshot, defeating bounded
+        # compression dictionaries and making cold network loads needlessly big.
+        "nodes": sorted(nodes.values(), key=lambda n: (n.get("source_file", ""), n.get("line", 0), n["id"])),
+        "edges": sorted(edges.values(), key=lambda e: (e.get("source_file", ""), e["source"], e.get("line", 0), e["id"])),
         "coverage": coverage, "diagnostics": diagnostics,
         "stats": {"sources": len(sources), "parsed": len(sources) - reused,
                   "reused": reused, "nodes": len(nodes), "edges": len(edges),

@@ -51,19 +51,43 @@ def parse_apex(facts: Facts) -> None:
                             n.end_point.row - n.start_point.row)
 
     def type_name(n):
-        value = text(n).strip()
-        if "<" in value:
-            # A DML receiver's List<Account> refers to Account. Preserve the
-            # full spelling separately on method signatures.
-            value = value[value.index("<") + 1:value.rfind(">")].split(",")[-1].strip()
-        return value.removesuffix("[]")
+        # A collection is not its element: List<Account>.size() is a platform
+        # method, whereas records[0].Name is a field on Account.
+        return re.sub(r"\s+", "", text(n))
+
+    def type_parts(value):
+        if value.endswith("[]"):
+            return "list", [value[:-2]]
+        base, sep, arguments = value.partition("<")
+        base = base.casefold().removeprefix("system.")
+        if not sep or not arguments.endswith(">"):
+            return base, []
+        args, start, depth = [], 0, 0
+        arguments = arguments[:-1]
+        for i, char in enumerate(arguments):
+            depth += (char == "<") - (char == ">")
+            if char == "," and depth == 0:
+                args.append(arguments[start:i])
+                start = i + 1
+        return base, args + [arguments[start:]]
+
+    def builtin(value):
+        base, _ = type_parts(value)
+        return base.split(".")[0] in BUILTINS
+
+    def dml_type(value):
+        base, args = type_parts(value)
+        return args[0] if base == "list" and len(args) == 1 else value
 
     def type_refs(n, owner):
         if not n:
             return
-        for t in walk(n):
-            if t.type == "type_identifier" and text(t).casefold() not in BUILTINS:
-                facts.ref(owner, "Type", text(t), "references_type", line(t))
+        if n.type in {"type_identifier", "scoped_type_identifier"}:
+            if not builtin(text(n)):
+                facts.ref(owner, "Type", text(n), "references_type", line(n))
+            return
+        for child in n.named_children:
+            type_refs(child, owner)
 
     def receiver_type(n, variables, class_name, trigger_object):
         if not n:
@@ -71,15 +95,37 @@ def parse_apex(facts: Facts) -> None:
         value = text(n)
         if value in {"this", "super"}:
             return class_name if value == "this" else variables.get("__super", "")
-        if value.casefold() in {"trigger.new", "trigger.old", "trigger.newmap", "trigger.oldmap"}:
-            return trigger_object
+        if trigger_object and value.casefold() in {"trigger.new", "trigger.old"}:
+            return f"List<{trigger_object}>"
+        if trigger_object and value.casefold() in {"trigger.newmap", "trigger.oldmap"}:
+            return f"Map<Id,{trigger_object}>"
         if n.type == "array_access":
-            return receiver_type(field(n, "array"), variables, class_name, trigger_object)
-        if n.type == "object_creation_expression":
+            base, args = type_parts(receiver_type(field(n, "array"), variables, class_name, trigger_object))
+            return args[0] if base == "list" and len(args) == 1 else ""
+        if n.type in {"object_creation_expression", "array_creation_expression", "cast_expression"}:
             return type_name(field(n, "type"))
+        if n.type == "parenthesized_expression" and len(n.named_children) == 1:
+            return receiver_type(n.named_children[0], variables, class_name, trigger_object)
+        if n.type == "method_invocation":
+            receiver = receiver_type(field(n, "object"), variables, class_name, trigger_object)
+            base, args = type_parts(receiver)
+            method = text(field(n, "name")).casefold()
+            if method == "get" and base == "list" and len(args) == 1:
+                return args[0]
+            if base == "map" and len(args) == 2:
+                if method == "get":
+                    return args[1]
+                if method == "values":
+                    return f"List<{args[1]}>"
+                if method == "keyset":
+                    return f"Set<{args[0]}>"
+            if method in {"clone", "deepclone"} and base in {"list", "map", "set"}:
+                return receiver
+            return ""  # A custom method's return type needs cross-file binding.
         if n.type == "field_access":
             receiver = receiver_type(field(n, "object"), variables, class_name, trigger_object)
-            return receiver + "." + text(field(n, "field")) if receiver else ""
+            name = receiver + "." + text(field(n, "field")) if receiver else ""
+            return variables.get(name.casefold(), name)
         return variables.get(value.casefold(), value)
 
     def query(n, owner, parent_object=""):
@@ -194,6 +240,7 @@ def parse_apex(facts: Facts) -> None:
                         for decl in child.named_children:
                             if decl.type == "variable_declarator":
                                 inherited[text(field(decl, "name")).casefold()] = typ
+                                inherited[(full + "." + text(field(decl, "name"))).casefold()] = typ
                                 if "final" in text(next((c for c in child.named_children if c.type == "modifiers"), None)).casefold().split():
                                     value = constant_string(field(decl, "value"), class_constants)
                                     if value is not None:
@@ -225,6 +272,8 @@ def parse_apex(facts: Facts) -> None:
                 visit(child, nid, class_name, scoped, trigger_object, scoped_constants)
             return
         if kind in {"local_variable_declaration", "field_declaration", "formal_parameter", "enhanced_for_statement"}:
+            if kind == "enhanced_for_statement":
+                variables = dict(variables)
             typ = type_name(field(n, "type"))
             type_refs(field(n, "type"), owner)
             name_node = field(n, "name")
@@ -288,7 +337,7 @@ def parse_apex(facts: Facts) -> None:
                     facts.level = "partial"
                     facts.issue("dynamic_query_unresolved", line(n))
             elif obj.casefold() == "database" and method.casefold() in {"insert", "update", "delete", "upsert", "merge", "undelete"}:
-                target = receiver_type(args[0], variables, class_name, trigger_object) if args else ""
+                target = dml_type(receiver_type(args[0], variables, class_name, trigger_object)) if args else ""
                 if target:
                     facts.ref(owner, "CustomObject", target, "writes", line(n), operation=method.casefold())
             elif obj.casefold() == "type" and method.casefold() == "forname":
@@ -301,7 +350,7 @@ def parse_apex(facts: Facts) -> None:
                 else:
                     facts.level = "partial"
                     facts.issue("dynamic_type_unresolved", line(n))
-            elif obj and obj.casefold() not in BUILTINS:
+            elif obj and not builtin(obj):
                 arg_types = []
                 for a in args:
                     arg_types.append({"string_literal": "String", "int": "Integer",
@@ -309,12 +358,18 @@ def parse_apex(facts: Facts) -> None:
                                      variables.get(text(a).casefold(), ""))
                 facts.ref(owner, "ApexMethod", obj + "." + method, "calls", line(n),
                           arity=len(args), argument_types=arg_types)
+            elif not obj:
+                facts.level = "partial"
+                facts.issue("apex_receiver_type_unresolved", line(n), member=method)
         if kind == "object_creation_expression":
             target = type_name(field(n, "type"))
-            if target and target.casefold() not in BUILTINS:
+            if target and not builtin(target):
                 facts.ref(owner, "Type", target, "constructs", line(n))
+            type_refs(field(n, "type"), owner)
+        if kind == "array_creation_expression":
+            type_refs(field(n, "type"), owner)
         if kind == "dml_expression":
-            target = receiver_type(field(n, "target"), variables, class_name, trigger_object)
+            target = dml_type(receiver_type(field(n, "target"), variables, class_name, trigger_object))
             op_node = next((x for x in n.named_children if x.type == "dml_type"), None)
             if target:
                 facts.ref(owner, "CustomObject", target, "writes", line(n), operation=text(op_node).casefold())
@@ -329,9 +384,12 @@ def parse_apex(facts: Facts) -> None:
                 # The outer field_access captures the whole namespaced label.
                 if not n.parent or n.parent.type != "field_access":
                     facts.ref(owner, "CustomLabel", label_name, "references", line(n))
-            elif receiver and receiver.casefold() not in BUILTINS:
+            elif receiver and not builtin(receiver):
                 relation = "writes" if n.parent and n.parent.type == "assignment_expression" and field(n.parent, "left") == n else "reads"
                 facts.ref(owner, "FieldPath", receiver + "." + member, relation, line(n))
+            elif not receiver:
+                facts.level = "partial"
+                facts.issue("apex_receiver_type_unresolved", line(n), member=member)
         # Branches/loops/nested blocks can mutate an outer variable. Do not
         # carry a guessed branch value into a later query. No Apex is executed.
         control = kind in {"if_statement", "for_statement", "enhanced_for_statement", "while_statement", "do_statement", "switch_expression", "try_statement"}
