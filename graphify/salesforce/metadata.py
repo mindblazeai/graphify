@@ -310,7 +310,8 @@ def parse_metadata(facts: Facts) -> None:
             permissions = {c.tag: c.text.strip() == "true" for c in n.children
                            if c.tag != tag and c.text.strip() in {"true", "false"}}
             if name:
-                facts.ref(owner, typ, name, "grants_access", n.line, permissions=permissions)
+                facts.ref(owner, typ, name, "grants_access" if any(permissions.values()) else "configures_access",
+                          n.line, permissions=permissions)
         if n.tag == "actions" and n.value("name"):
             typ = {"FieldUpdate": "WorkflowFieldUpdate", "Alert": "WorkflowAlert",
                    "Task": "WorkflowTask", "OutboundMessage": "WorkflowOutboundMessage"}.get(n.value("type"))

@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 
-from .model import ENGINE_VERSION, SCHEMA_VERSION, Facts, Source, node_id
+from .model import ENGINE_VERSION, SCHEMA_VERSION, Facts, Source, node_id, salesforce_id
 from .registry import identify
 
 MAX_SOURCE_BYTES = 32 * 1024 * 1024
@@ -31,6 +31,9 @@ def extract_facts(source: Source) -> dict:
     elif source.path.startswith("salesforce-api/sobjects/") and source.path.endswith("/describe.json"):
         from .schema import parse_describe
         parse_describe(facts)
+    elif source.metadata_type == "PermissionSet" and source.path.startswith("salesforce-api/permissions/"):
+        from .permissions import parse_permissions
+        parse_permissions(facts)
     elif source.metadata_type == "ReportType" and source.path.startswith("salesforce-api/reportTypes/") and source.path.endswith("/describe.json"):
         from .reports import parse_report_type_describe
         parse_report_type_describe(facts)
@@ -94,7 +97,8 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                     existing["source_files"].append(node["source_file"])
                 for k in ("reference_to", "relationship_name", "data_type", "annotations",
                           "related_object", "recipient_object", "is_test", "child_relationships",
-                          "parent_relationship_name", "report_type", "report_columns", "report_columns_source", "report_type_api_status", "schema_roots"):
+                          "parent_relationship_name", "report_type", "report_columns", "report_columns_source", "report_type_api_status", "schema_roots",
+                          "salesforce_id", "permission_api_status", "permission_api_status_source"):
                     if node.get(k):
                         existing[k] = node[k]
                 if node.get("aliases"):
@@ -123,8 +127,12 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
 
     index: dict[tuple[str, str], list[dict]] = {}
     methods: dict[str, list[dict]] = {}
+    by_salesforce_id: dict[str, list[dict]] = {}
     fields = [n for n in nodes.values() if n["kind"] == "CustomField"]
     for n in nodes.values():
+        sfid = salesforce_id(n.get("salesforce_id"))
+        if sfid and n["id"] == n.get("component_id"):
+            by_salesforce_id.setdefault(sfid, []).append(n)
         for name in {n["name"].casefold(), *(a.casefold() for a in n.get("aliases", []))}:
             index.setdefault((n["kind"].casefold(), name), []).append(n)
         if n["kind"] == "ApexMethod":
@@ -260,6 +268,11 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
 
     def resolve(ref, intermediates=None):
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
+        if "target_salesforce_id" in ref:
+            # Never fall back to a display name or ID prefix. These declarations
+            # were independently supplied in the same scoped source inventory.
+            return [n for n in by_salesforce_id.get(salesforce_id(ref["target_salesforce_id"]), [])
+                    if kind == "SalesforceMetadataId" or n["kind"] == kind]
         if kind == "ReportColumn":
             report = nodes.get(ref["source"], {})
             type_name = report.get("report_type", "")
@@ -322,6 +335,14 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
     edges = {}
     for original in references:
         ref = dict(original)
+        if section := ref.get("permission_section"):
+            component = nodes[ref["source"]]
+            status = component.get("permission_api_status", {})
+            state = (status.get("sections", {}).get(section, {}).get("status", "unknown")
+                     if status.get("status") in {"complete", "partial"} else status.get("status", "unknown"))
+            ref["permission_capture_status"] = state
+            if proof := component.get("permission_api_status_source"):
+                ref["binding_evidence"] = [{**proof, "status": state}]
         # A relationship traversal depends on its lookup field as well as the
         # final field. Preserve both without treating them as ambiguous targets.
         intermediate_fields = []
@@ -336,11 +357,18 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         resolution = "resolved" if len(matches) == 1 else "ambiguous" if matches else "unresolved"
         if len(matches) == 1:
             target = matches[0]["id"]
+            if "target_salesforce_id" in ref:
+                ref["target_name"] = matches[0]["name"]
         else:
             kind = ref["target_kind"]
             name = ref["target_name"]
             context = ref.get("report_type", "") + ":" if kind == "ReportColumn" else ""
             target = node_id("UnresolvedReference", f"{ref.get('namespace', '')}:{kind}:{context}{name}")
+            if "target_salesforce_id" in ref:
+                # node_id intentionally folds API names, but must not collapse
+                # unknown record IDs which differ only in case.
+                exact = salesforce_id(ref["target_salesforce_id"]) or ref["target_salesforce_id"]
+                target = node_id("UnresolvedReference", kind) + ":id:" + hashlib.sha256(exact.encode()).hexdigest()[:32]
             nodes.setdefault(target, {
                 "id": target, "kind": kind, "name": name, "label": name,
                 "external": True, "resolution": resolution,
@@ -353,6 +381,15 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 "confidence": confidence, "weight": 1.0, "_origin": "salesforce"}
         key = hashlib.sha256(json.dumps(edge, sort_keys=True).encode()).hexdigest()[:32]
         edges[key] = {"id": key, **edge}
+        if resolution == "resolved" and ref["relation"] == "owned_by_profile":
+            # A verified ProfileId makes the backing permission set a structural
+            # member of that profile. Profile exploration can follow its grants
+            # just as class exploration follows its declared methods.
+            inverse = {**edge, "source": target, "target": ref["source"],
+                       "target_kind": "PermissionSet", "target_name": nodes[ref["source"]]["name"],
+                       "target_salesforce_id": nodes[ref["source"]]["salesforce_id"], "relation": "contains"}
+            inverse_key = hashlib.sha256(json.dumps(inverse, sort_keys=True).encode()).hexdigest()[:32]
+            edges[inverse_key] = {"id": inverse_key, **inverse}
 
     totals = {level: sum(c["level"] == level for c in coverage)
               for level in ("semantic", "structural", "catalog", "partial", "unparsed")}

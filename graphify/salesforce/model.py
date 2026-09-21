@@ -2,11 +2,17 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-6"
+ENGINE_VERSION = "salesforce-7"
+
+
+def salesforce_id(value) -> str | None:
+    """Salesforce's first 15 ID characters are case-SENSITIVE, unlike names."""
+    return value[:15] if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9]{15}(?:[A-Za-z0-9]{3})?", value) else None
 
 
 def node_id(kind: str, name: str) -> str:
@@ -26,6 +32,7 @@ class Source:
     # Trusted storage may supply the already-verified content hash when an
     # unchanged source body is omitted and its existing facts will be reused.
     content_sha: str | None = None
+    salesforce_id: str | None = None
 
     @property
     def component_id(self) -> str:
@@ -35,7 +42,7 @@ class Source:
     def fingerprint(self) -> str:
         return hashlib.sha256(json.dumps(
             [ENGINE_VERSION, self.path, self.content_sha or hashlib.sha256(self.content.encode()).hexdigest(), self.metadata_type,
-             self.full_name, self.namespace, self.source_kind],
+             self.full_name, self.namespace, self.source_kind, self.salesforce_id],
             ensure_ascii=False, separators=(",", ":"),
         ).encode()).hexdigest()
 
@@ -66,6 +73,8 @@ class Facts:
             "line": line, "file_type": "code", "external": False,
             **attributes,
         }
+        if nid == self.source.component_id and salesforce_id(self.source.salesforce_id):
+            self.nodes[nid]["salesforce_id"] = self.source.salesforce_id
         return nid
 
     def ref(self, source_id: str, kind: str, name: str, relation: str,
