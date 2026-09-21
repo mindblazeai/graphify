@@ -270,6 +270,12 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
 
     def resolve(ref, intermediates=None):
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
+        if kind == "NotificationType":
+            # Standard/provider notification names are not custom declarations.
+            return lookup("CustomNotificationType", name, ns)
+        if kind == "NotificationApp":
+            # Metadata API's ECA precedence rule applies to exact API names.
+            return lookup("ExternalClientApplication", name, ns) or lookup("ConnectedApp", name, ns)
         if "metadata_name_or_id" in ref:
             return lookup(kind, name, ns) + [n for n in by_salesforce_id.get(salesforce_id(ref["metadata_name_or_id"]), []) if n["kind"] == kind]
         if "target_salesforce_id" in ref:
