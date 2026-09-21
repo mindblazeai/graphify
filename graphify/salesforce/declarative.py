@@ -13,6 +13,7 @@ from .experience import SHAPES as EXPERIENCE_SHAPES, parse_experience, shape_pat
 from .translations import SHAPES as TRANSLATION_SHAPES, parse_translation
 from .assets import SHAPES as ASSET_SHAPES, parse_asset
 from .policies import SHAPES as POLICY_SHAPES, parse_policy
+from .external_clients import SHAPES as EXTERNAL_CLIENT_SHAPES, parse_external_client
 
 if TYPE_CHECKING:
     from .metadata import Element
@@ -59,6 +60,7 @@ SHAPES.update(EXPERIENCE_SHAPES)
 SHAPES.update(TRANSLATION_SHAPES)
 SHAPES.update(ASSET_SHAPES)
 SHAPES.update(POLICY_SHAPES)
+SHAPES.update(EXTERNAL_CLIENT_SHAPES)
 SHAPES = {kind: {path: frozenset(tags.split()) | ({"fullName"} if not path else set())
                  for path, tags in shape.items()} for kind, shape in SHAPES.items()}
 
@@ -135,7 +137,10 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
         else:
             issue("metadata_reference_context_missing", n, property=n.tag)
 
-    if kind in POLICY_SHAPES:
+    if kind in EXTERNAL_CLIENT_SHAPES:
+        parse_external_client(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind in POLICY_SHAPES:
         parse_policy(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
 
     elif kind in TRANSLATION_SHAPES:
