@@ -117,11 +117,20 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 return out
         return []
 
+    # A large org can have tens of thousands of relationship references.
+    # Scanning every field for each segment made binding quadratic (over 100M
+    # dict reads in the live corpus). Build the reverse schema index once.
+    child_relationships: dict[tuple[str, str], set[str]] = {}
+    for f in fields:
+        relationship = f.get("relationship_name", "").casefold()
+        if not relationship:
+            continue
+        for parent in f.get("reference_to", []):
+            child_relationships.setdefault((parent.casefold(), relationship), set()).add(f["name"].split(".")[0])
+
     def child_objects(name: str) -> list[str]:
         obj, _, rel = name.rpartition(".")
-        return sorted({f["name"].split(".")[0] for f in fields
-                       if obj.casefold() in [x.casefold() for x in f.get("reference_to", [])]
-                       and f.get("relationship_name", "").casefold() == rel.casefold()})
+        return sorted(child_relationships.get((obj.casefold(), rel.casefold()), set()))
 
     def field_path(name: str, namespace: str, intermediates: list | None = None) -> list[dict]:
         parts = name.split(".")

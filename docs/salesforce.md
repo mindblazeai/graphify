@@ -59,4 +59,4 @@ uv run --extra salesforce pytest tests/test_salesforce_graph.py tests/test_langu
 
 The registry records its source hash/version and Salesforce's Apache-2.0 attribution. Graphify's upstream Apache-2.0 license and NOTICE remain in force; the grammar-pack distribution retains its upstream grammar licenses. No Salesforce customer source is included in the fixtures.
 
-The Salesforce and language suites currently pass 958 tests (20 optional-language skips), including a parametrized identity/coverage contract for every registered type. This is a coverage contract, not a promise of complete semantics for all 533 types.
+The Salesforce and language suites currently pass 959 tests (20 optional-language skips), including a parametrized identity/coverage contract for every registered type. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses a precomputed reverse schema index rather than scanning every field per reference.

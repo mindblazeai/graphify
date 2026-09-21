@@ -312,6 +312,15 @@ def test_custom_metadata_values_reference_declared_type_fields():
     assert ("Config.Default", "Config__mdt.Score__c") in edges(graph, "references_field")
 
 
+def test_child_relationship_index_preserves_case_insensitive_polymorphic_bindings():
+    graph = build_graph([
+        source("CustomObject", "Child__c", "<CustomObject><fields><fullName>Parent__c</fullName><type>Lookup</type><referenceTo>Account</referenceTo><referenceTo>Contact</referenceTo><relationshipName>Children__r</relationshipName></fields><fields><fullName>Name</fullName><type>Text</type></fields></CustomObject>"),
+        source("EmailTemplate", "Children", "{!ACCOUNT.children__r.Name} {!Contact.Children__r.Name}", "email/Children.email"),
+    ])
+    assert ("Children", "Child__c.Name") in edges(graph, "reads")
+    assert len([e for e in graph["edges"] if e["source"] == node_id("EmailTemplate", "Children") and e["resolution"] == "resolved"]) == 2
+
+
 @pytest.mark.parametrize("kind", sorted(registry()))
 def test_each_registered_metadata_type_has_addressable_identity_and_coverage(kind):
     graph = build_graph([source(kind, "Component", f"<{kind}/>")])
