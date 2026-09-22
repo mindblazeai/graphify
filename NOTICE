@@ -15,3 +15,9 @@ graphify/salesforce/registry.json is a normalized derivative of the metadata
 registry in @salesforce/source-deploy-retrieve. Copyright (c) 2026 Salesforce,
 Inc. All rights reserved. Licensed under Apache-2.0 (see LICENSE). Generation
 provenance and the upstream source digest are included in registry.json.
+
+graphify/salesforce/settings_literals.py contains normalized field/type facts
+from Salesforce's sf-skills Metadata API documentation, revision
+c217b703b3e5a3c279f1a510d8703161b14bd0a5. Copyright Salesforce, Inc. Licensed
+under Apache-2.0 (see LICENSE). The generated module records each input's SHA-256;
+scripts/build_salesforce_settings_literals.py provides the reproducible generator.

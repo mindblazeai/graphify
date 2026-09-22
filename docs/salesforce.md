@@ -128,13 +128,44 @@ Trusted storage integrations can supply `Source.content_sha` to compute fingerpr
 
 The caller supplies the complete current source set. Files omitted from the next build are pruned, and unchanged caller files are rebound so deleted targets become unresolved. A source-cache fingerprint includes engine version; bump `ENGINE_VERSION` whenever extraction semantics change. This is not a Salesforce deletion-detection API.
 
+## Additional typed Settings and Network contracts (engine 15)
+
+The Settings scalar registry covers 1,473 explicitly typed slots across 106
+roots, including five reviewed enum slots. These are provider WSDL contracts,
+not a heuristic that promotes boolean-looking XML. Each root/property is exact
+and case-sensitive; required values, scalar cardinality, bounded numbers,
+closed enums and unknown properties are checked. A root can become semantic
+only when every supplied property is understood. Unknown roots stay structural;
+unreviewed string/complex properties stay partial. No runtime network lookup is
+needed. The registry pins Salesforce's
+[structured metadata documentation](https://github.com/forcedotcom/sf-skills/tree/c217b703b3e5a3c279f1a510d8703161b14bd0a5/skills/platform-metadata-api-context-get/assets/metadata_api)
+by revision and input SHA-256. WSDL spelling takes precedence over prose-table
+typos, such as `defaultQueueableDelay`, `fileType` and `enableNewToReadTriggers`.
+
+Nested Company fiscal-year, My Domain URL, Employee User, file-download policy,
+real-time event and Case settings have separately reviewed contracts. Employee
+profiles and permission sets, event entities, Case email templates and Apex
+handlers, routing flows, fallback queues and Case record types link independent
+typed declarations. Picklist defaults reference their fixed Case/Task field,
+never an API name guessed from the picklist's text. Disabled configuration still
+retains its references. User records, missing/ambiguous identities, unsupported
+values and future properties remain gaps. Addresses, domain suffixes and other
+literal configuration do not produce arbitrary metadata edges.
+
+Network now recognizes the WSDL's optional `enableExpFriendlyUrlsAsDefault` and
+`enableLWRExperienceConnectedApp` booleans. Its headless registration and password
+reset template fields bind exact EmailTemplate identities. Salesforce documents
+these [headless-flow template settings](https://help.salesforce.com/s/articleView?id=sf.headless_identity_experience_settings_parent.htm&language=en_US&type=5).
+This does not claim full semantics for undocumented Network fields.
+
 ## Maintenance and verification
 
 ```sh
 python scripts/build_salesforce_registry.py /path/to/metadataRegistry.json 12.37.1
+python scripts/build_salesforce_settings_literals.py /path/to/pinned-metadata-docs
 uv run --extra salesforce pytest tests/test_salesforce_graph.py tests/test_salesforce_permissions.py tests/test_salesforce_declarative.py tests/test_salesforce_experience.py tests/test_salesforce_translations_assets.py tests/test_salesforce_policies.py tests/test_salesforce_external_clients.py tests/test_salesforce_setup.py tests/test_salesforce_settings.py tests/test_languages.py
 ```
 
 The registry records its source hash/version and Salesforce's Apache-2.0 attribution. Graphify's upstream Apache-2.0 license and NOTICE remain in force; the grammar-pack distribution retains its upstream grammar licenses. No Salesforce customer source is included in the fixtures.
 
-The Salesforce and language suites currently pass 1,518 tests (20 optional-language skips), including a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 setup/settings regressions, and 65 Audience/field-identity/scope regressions. Fixtures cover positive bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.
+The Salesforce and language suites currently pass 7,704 tests (20 optional-language skips); the full fork suite passes 13,044 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions and 6,186 additional Settings/Network cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.

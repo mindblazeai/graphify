@@ -9,7 +9,8 @@ import re
 
 
 PAGE_FIELDS = "authorizationRequiredPage bandwidthExceededPage changePasswordPage chatterAnswersForgotPasswordConfirmPage chatterAnswersForgotPasswordPage chatterAnswersHelpPage chatterAnswersLoginPage chatterAnswersRegistrationPage fileNotFoundPage forgotPasswordPage genericErrorPage inMaintenancePage inactiveIndexPage indexPage myProfilePage robotsTxtPage selfRegPage siteTemplate".split()
-EMAIL_FIELDS = "caseCommentEmailTemplate changePasswordTemplate chgEmailVerNewTemplate chgEmailVerOldTemplate forgotPasswordTemplate lockoutTemplate pwdlessRegEmailTemplate selfRegMicroBatchSubErrorEmailTemplate verificationTemplate welcomeTemplate".split()
+EMAIL_FIELDS = "caseCommentEmailTemplate changePasswordTemplate chgEmailVerNewTemplate chgEmailVerOldTemplate forgotPasswordTemplate headlessForgotPasswordTemplate headlessRegistrationTemplate lockoutTemplate pwdlessRegEmailTemplate selfRegMicroBatchSubErrorEmailTemplate verificationTemplate welcomeTemplate".split()
+NETWORK_WSDL_FLAGS = ("enableExpFriendlyUrlsAsDefault", "enableLWRExperienceConnectedApp")
 MENU_ITEM_FIELDS = "defaultListViewId label menuItemBranding position publiclyAvailable subMenu target targetPreference type"
 
 SHAPES = {
@@ -43,6 +44,7 @@ SHAPES = {
         "assignments": "profiles users", "assignments/profiles": "profile", "assignments/users": "user",
     },
 }
+SHAPES["Network"][""] += " " + " ".join(NETWORK_WSDL_FLAGS)
 
 
 def shape_path(kind, path):
@@ -118,6 +120,14 @@ def parse_experience(facts, root, kind, *, issue, scalar, ref, children):
             issue("site_portal_identity_unverified", portal)
 
     elif kind == "Network":
+        # Salesforce's version-pinned WSDL includes these optional booleans,
+        # although its prose field table omits them (sf-skills c217b703b3e5).
+        for tag in NETWORK_WSDL_FLAGS:
+            value = scalar(root, tag)
+            if value is None and children(root, tag):
+                issue("network_value_missing", root, property=tag)
+            if value and value.text.strip() not in {"true", "false", "0", "1"}:
+                issue("network_value_unsupported", value, property=tag)
         for tag in EMAIL_FIELDS:
             ref(scalar(root, tag), "EmailTemplate")
         activation = scalar(root, "deviceActEmailTemplate")

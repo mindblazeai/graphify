@@ -7,10 +7,13 @@ an unqualified column. Unbound aliases retain their original evidence.
 """
 from __future__ import annotations
 
+import math
 import re
 
 from .model import salesforce_id
 from .setup import validate_literals
+from .settings_literals import SCALAR_CONTRACTS
+from .settings_features import SHAPES as FEATURE_SHAPES, parse_features
 
 
 LIGHTNING_FLAGS = """enableAccessCheckCrucPref enableApiUserLtngOutAccessPref
@@ -68,6 +71,16 @@ SHAPES = {
         **{"forecastingTypeSettings/" + tag: "field label" if "Label" in tag else "field" for tag in OPPORTUNITY_LISTS},
     },
 }
+for _root, _features in FEATURE_SHAPES.items():
+    _shape = SHAPES.setdefault(_root, {})
+    for _path, _fields in _features.items():
+        _shape[_path] = _shape.get(_path, "") + " " + _fields
+# Explicit provider field types, not heuristics based on an org's current XML
+# values. Unsupported string/complex fields stay outside this shape unless a
+# dedicated adapter above accounts for their semantics.
+for _root, _fields in SCALAR_CONTRACTS.items():
+    _shape = SHAPES.setdefault(_root, {})
+    _shape[""] = _shape.get("", "") + " " + " ".join(_fields)
 
 
 def parse_settings(facts, root, kind, *, issue, scalar, ref, children):
@@ -99,7 +112,30 @@ def parse_settings(facts, root, kind, *, issue, scalar, ref, children):
                      if path.endswith(("SelectedSettings", "UnselectedSettings")))
     validate_literals(root, SHAPES[kind], issue=issue, scalar=scalar, repeated=repeated)
 
-    if kind == "LightningExperienceSettings":
+    for tag, (typ, required, allowed) in SCALAR_CONTRACTS.get(kind, {}).items():
+        n = scalar(root, tag, required=required)
+        if n is None:
+            if children(root, tag):
+                issue("settings_scalar_value_missing", root, property=tag)
+            continue
+        text = val(n)
+        valid = False
+        if typ == "boolean":
+            valid = text in {"true", "false", "1", "0"}
+        elif typ == "int":
+            valid = bool(re.fullmatch(r"[+-]?[0-9]{1,10}", text)) and -2147483648 <= int(text) <= 2147483647
+        elif typ == "double":
+            valid = (len(text) <= 128 and bool(re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", text))
+                     and math.isfinite(float(text)))
+        elif typ == "enum":
+            valid = text in allowed
+        if not valid:
+            issue("settings_scalar_value_unsupported", n, property=tag, scalar_type=typ)
+
+    if kind in FEATURE_SHAPES:
+        parse_features(root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind == "LightningExperienceSettings":
         for tag in LIGHTNING_FLAGS.split():
             boolean(scalar(root, tag))
         named(scalar(root, "activeThemeName"), "LightningExperienceTheme", "activates")

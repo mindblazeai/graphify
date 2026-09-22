@@ -2,6 +2,9 @@
 import pytest
 
 from graphify.salesforce import Source, build_graph, node_id
+from graphify.salesforce.settings_literals import SCALAR_CONTRACTS
+
+SEARCH_REQUIRED_XML = "".join(f"<{tag}>false</{tag}>" for tag, (_, required, _) in SCALAR_CONTRACTS["SearchSettings"].items() if required)
 
 
 def catalog(kind, name, **kwargs):
@@ -23,7 +26,7 @@ def level(graph):
 @pytest.mark.parametrize("root,body,target_kind,target_name,relation", [
     ("LightningExperienceSettings", "<activeThemeName>Brand</activeThemeName><enableS1DesktopEnabled>true</enableS1DesktopEnabled>", "LightningExperienceTheme", "Brand", "activates"),
     ("IdentityProviderSettings", "<enableIdentityProvider>true</enableIdentityProvider><certificateName>Signing</certificateName>", "Certificate", "Signing", "uses_certificate"),
-    ("SearchSettings", "<searchSettingsByObject><searchSettingsByObject><name>Account</name><resultsPerPageCount>25</resultsPerPageCount></searchSettingsByObject></searchSettingsByObject>", "CustomObject", "Account", "configures"),
+    ("SearchSettings", SEARCH_REQUIRED_XML + "<searchSettingsByObject><searchSettingsByObject><name>Account</name><resultsPerPageCount>25</resultsPerPageCount></searchSettingsByObject></searchSettingsByObject>", "CustomObject", "Account", "configures"),
     ("Territory2Settings", "<opportunityFilterSettings><apexClassName>AssignTerritory</apexClassName><enableFilter>true</enableFilter></opportunityFilterSettings>", "ApexClass", "AssignTerritory", "executes"),
     ("ForecastingObjectListSettings", "<forecastingTypeObjectListSettings><forecastingTypeDeveloperName>Revenue</forecastingTypeDeveloperName></forecastingTypeObjectListSettings>", "ForecastingType", "Revenue", "configures"),
     ("ForecastingSettings", "<forecastingTypeSettings><name>Revenue</name><active>true</active></forecastingTypeSettings>", "ForecastingType", "Revenue", "configures"),

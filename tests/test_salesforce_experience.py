@@ -4,7 +4,7 @@ import hashlib
 import pytest
 
 from graphify.salesforce import Source, build_graph, node_id
-from graphify.salesforce.experience import EMAIL_FIELDS, PAGE_FIELDS
+from graphify.salesforce.experience import EMAIL_FIELDS, PAGE_FIELDS, NETWORK_WSDL_FLAGS
 
 
 def source(kind, xml, name="Example", **kwargs):
@@ -69,6 +69,21 @@ def test_each_documented_network_template_slot(tag):
     g = build_graph([source("Network", f"<Network><site>Site</site><{tag}>public/Mail</{tag}></Network>"),
                      catalog("EmailTemplate", "public/Mail")])
     assert refs(g, "EmailTemplate")[0]["resolution"] == "resolved"
+
+
+@pytest.mark.parametrize("tag", NETWORK_WSDL_FLAGS)
+@pytest.mark.parametrize("value", ["true", "false", "0", "1"])
+def test_network_new_wsdl_flags_are_literals_not_component_names(tag, value):
+    g = build_graph([source("Network", f"<Network><site>Portal</site><{tag}>{value}</{tag}></Network>"), catalog("CustomSite", "Portal")])
+    assert level(g, "Network") == "semantic"
+    assert {e["target_kind"] for e in g["edges"]} == {"CustomSite"}
+
+
+@pytest.mark.parametrize("tag", NETWORK_WSDL_FLAGS)
+@pytest.mark.parametrize("value", ["", "Account.Name", "yes", "TRUE", "<nested>true</nested>"])
+def test_network_new_wsdl_flags_fail_closed_on_unknown_values(tag, value):
+    g = build_graph([source("Network", f"<Network><{tag}>{value}</{tag}></Network>")])
+    assert level(g, "Network") == "partial" and not g["edges"]
 
 
 @pytest.mark.parametrize("value", ["00X000000000001", "00X000000000001AAA"])
