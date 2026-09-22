@@ -18,6 +18,9 @@ def extract_facts(source: Source) -> dict:
     if source.source_kind == "catalog":
         facts.level = "catalog"
         facts.issue("source_not_retrieved", metadata_type=source.metadata_type)
+    elif source.binary_content is not None and source.source_kind != "binary":
+        facts.level = "partial"
+        facts.issue("binary_source_kind_mismatch")
     elif source.metadata_type in {"ApexClass", "ApexTrigger", "ApexPage", "ApexComponent"} and source.content.strip() == "(hidden)":
         # Tooling returns this literal for inaccessible managed code. It is
         # an availability signal, not malformed Apex/XML or an empty program.
@@ -25,7 +28,11 @@ def extract_facts(source: Source) -> dict:
         facts.nodes[source.component_id]["source_kind"] = "hidden"
         facts.issue("source_hidden_by_salesforce", metadata_type=source.metadata_type)
     elif source.source_kind == "binary":
-        facts.issue("binary_content_not_parsed", metadata_type=source.metadata_type)
+        if source.metadata_type in {"Document", "StaticResource"}:
+            from .image_payloads import parse_image_payload
+            parse_image_payload(facts)
+        else:
+            facts.issue("binary_content_not_parsed", metadata_type=source.metadata_type)
     elif len(source.content.encode()) > MAX_SOURCE_BYTES:
         facts.level = "unparsed"
         facts.issue("source_size_limit", max_bytes=MAX_SOURCE_BYTES)
@@ -70,7 +77,8 @@ def extract_facts(source: Source) -> dict:
 
 
 def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
-                include_facts: bool = False, node_filter: Callable[[dict], bool] | None = None) -> dict:
+                include_facts: bool = False, node_filter: Callable[[dict], bool] | None = None,
+                load_source: Callable[[Source], Source] | None = None) -> dict:
     previous_facts = previous_facts or {}
     facts_by_path = {}
     fact_sequence = []
@@ -87,7 +95,10 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
             fact = old
             reused += 1
         else:
-            fact = extract_facts(source)
+            loaded = load_source(source) if load_source else source
+            if loaded.fingerprint != source.fingerprint:
+                raise ValueError("Source loader changed the inventoried source identity or hash")
+            fact = extract_facts(loaded)
         facts_by_path[key] = fact
         fact_sequence.append(fact)
     from .asset_payloads import paired_asset_facts
@@ -594,5 +605,6 @@ def scan_project(root: Path) -> list[Source]:
                     source_kind = "source" if "\x00" not in text else "binary"
                 except UnicodeDecodeError:
                     text, source_kind = "", "binary"
-                sources.append(Source(rel, text, *component, source_kind=source_kind))
+                sources.append(Source(rel, text if source_kind == "source" else "", *component,
+                                      source_kind=source_kind, binary_content=data if source_kind == "binary" else None))
     return sources

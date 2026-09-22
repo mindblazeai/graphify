@@ -43,6 +43,13 @@ def identify(path: str) -> tuple[str, str] | None:
                 if cfg["in_folder"] and len(rest) > 1:
                     name = "/".join((*rest[:-1], name))
                 return kind, name
+        # Document bodies use their original filename extension, not a fixed
+        # '.document' suffix. Preserve the folder and extension; descriptor/body
+        # matching and actual payload validation happen in the parser.
+        if folder == "documents" and len(rest) > 1:
+            return "Document", "/".join((*rest[:-1], filename))
+        if folder == "documents" and len(rest) == 1 and rest[0].endswith("-meta.xml"):
+            return "DocumentFolder", filename
     if parts:
         suffix = PurePosixPath(parts[-1]).suffix.lower()
         if suffix in {".cls", ".trigger", ".soql", ".sosl"}:

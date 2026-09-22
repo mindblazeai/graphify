@@ -1238,6 +1238,7 @@ robot = [
     { name = "robotframework" },
 ]
 salesforce = [
+    { name = "pillow" },
     { name = "tree-sitter-language-pack" },
     { name = "tzdata" },
 ]
@@ -1319,7 +1320,9 @@ requires-dist = [
     { name = "openpyxl", marker = "extra == 'all'" },
     { name = "openpyxl", marker = "extra == 'google'" },
     { name = "openpyxl", marker = "extra == 'office'" },
+    { name = "pillow", marker = "extra == 'all'", specifier = "==12.3.0" },
     { name = "pillow", marker = "extra == 'all'", specifier = ">=12.3.0" },
+    { name = "pillow", marker = "extra == 'salesforce'", specifier = "==12.3.0" },
     { name = "pillow", marker = "extra == 'svg'", specifier = ">=12.3.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'all'" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'" },

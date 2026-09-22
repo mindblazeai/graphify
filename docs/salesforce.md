@@ -3,14 +3,15 @@
 This fork adds `graphify.salesforce`, a deterministic, model-free graph engine. It does not contact Salesforce or upload source to Graphify. Install the optional Salesforce grammar pack:
 
 ```sh
-uv sync --extra salesforce
+uv sync --inexact --extra salesforce
 uv run graphify-salesforce /path/to/salesforce-project --output graph.json
 # Equivalent: python -m graphify.salesforce /path/to/salesforce-project
 ```
 
 The `[salesforce]` and `[all]` extras include the pinned Salesforce grammar pack
 and timezone definitions used to validate Business Hours settings independently
-of the host operating system.
+of the host operating system, plus the pinned Pillow raster validator. On an
+existing development environment, `--inexact` preserves other installed extras.
 
 Use the Salesforce command for cross-file metadata binding; the normal Graphify Apex extractor also uses the AST adapter when the extra is installed. Without the extra, the legacy extractor retains its regex fallback and reports that limitation. The general Graphify command does not automatically run this whole-org metadata pipeline.
 
@@ -30,6 +31,8 @@ Use the Salesforce command for cross-file metadata binding; the normal Graphify 
 | Translations and branding | Exact object/member/value-set translation targets; theme → branding → declared asset links; documented local file-asset routes |
 | Asset envelopes and notification actions | Explicit asset-origin network and document-folder links; notification API actions → Apex; payload analysis limits remain partial |
 | CSV static resources | Exact adjacent descriptor/body pairing for `text/csv` and `application/csv`; bounded literal tables, both source hashes retained; cell values are not metadata references |
+| Document and StaticResource images | Bounded PNG/JPEG validation from original bytes; exact descriptor pairing, both source hashes, independently declared document folders; pixels and image metadata are not code |
+| Document folders | Required labels and typed access settings; independently declared group/role share targets; User/manager and unverified legacy share identities remain partial |
 | Restriction, prompt and notification policies | Bounded field-restriction expressions/field sets; prompt images and documented visibility filters; isolated notification delivery settings |
 | Data-cleaning mappings | Context-verified input reads/output writes; virtual data-service objects remain distinct from Salesforce objects |
 | External client apps and menus | Explicit settings-to-app, Apex handler, custom OAuth scope, ID-bound permission/certificate and qualified attribute-field links; typed app-menu entries remain partial |
@@ -85,7 +88,7 @@ Engine `salesforce-10` adds typed object/field/global-value-set/standard-value-s
 
 Lightning themes bind their default BrandingSet by documented name or independently cataloged ID, preserving ambiguous collisions. Known image properties bind exact ContentAsset names or the documented local `/file-asset/<API name>` route with an optional numeric version. The original route/version remains evidence, not proof that that payload version was analyzed. Absolute URLs, org overrides, arbitrary basenames and encoded paths are not normalized into local metadata. See Salesforce's [asset URL contract](https://help.salesforce.com/s/articleView?id=004652690&language=en_US&type=1). Unknown branding properties and definition identities stay partial.
 
-ContentAsset, Document and StaticResource XML envelopes explicitly report `asset_payload_not_analyzed`. Asset `originNetwork` and exact document-folder references are supported, but client filenames, zip entries and the provider-reserved asset-link `name` are not guessed as metadata identities. GlobalValueSet values and RemoteSiteSetting URLs are data/configuration, not invented dependencies; a fully understood component can legitimately have no outgoing links. Custom notification `NotificationApiAction` targets link Apex classes; client-side `Share` actions do not. These adapters do not evaluate effective sharing, download binary payloads or execute notification actions.
+ContentAsset, Document and StaticResource XML envelopes report `asset_payload_not_analyzed` unless a supported original payload is independently validated and paired (CSV or engine-22 images). Asset `originNetwork` and exact document-folder references are supported, but client filenames, zip entries and the provider-reserved asset-link `name` are not guessed as metadata identities. GlobalValueSet values and RemoteSiteSetting URLs are data/configuration, not invented dependencies; a fully understood component can legitimately have no outgoing links. Custom notification `NotificationApiAction` targets link Apex classes; client-side `Share` actions do not. These adapters do not evaluate effective sharing, download binary payloads or execute notification actions.
 
 Engine `salesforce-11` adds seven policy adapters. FieldRestrictionRule uses its documented User/Employee target and FieldSet/ComplianceCategory discriminator. A bounded expression parser extracts record-field and `$User` reads, never evaluates formulas, and rejects malformed or excessive syntax. Known-function arities are checked; unfamiliar calls/globals stay partial. Strings, function names and compliance-category values are not fields or field sets. Missing independently declared targets keep coverage partial until a later rebind supplies them.
 
@@ -229,6 +232,50 @@ also check holiday sibling isolation and Security → EmailTemplate → field
 dependency paths. These are supported static contracts, not complete semantics
 for every Settings root or a claim that every org has those references.
 
+## Original image bytes and DocumentFolder metadata (engine 22)
+
+`Source(..., source_kind="binary", binary_content=bytes)` keeps original bytes
+separate from text. `scan_project` preserves these bytes; Document identities
+retain their folder and original extension. Binary hashes participate in source
+fingerprints, but raw bytes never appear in graph/facts JSON.
+
+PNG and JPEG validation is limited to 2 MiB compressed input, four million
+pixels, 8,192 pixels per dimension and a single frame. PNG preflight checks chunk
+bounds/CRCs, terminal IEND, unknown critical chunks and bounded compressed
+ancillary metadata (1 MiB total); animated PNG is unsupported. JPEG must have
+its expected signature and terminal EOI without appended data. The pinned
+[Pillow validator](https://pillow.readthedocs.io/en/stable/reference/Image.html)
+verifies the container, then reopens and actually decodes the pixels. Missing
+dependencies, permissive truncated-image settings, oversized images, malformed
+data and unsupported formats remain partial. This is bounded format validation,
+not an image-content classifier or a claim that every possible image subtype is
+supported. Pixels, comments, EXIF and embedded strings are not metadata references.
+
+Payload success alone cannot close a component gap. The exact adjacent
+descriptor must match its kind, component, namespace and path. Document's
+required `internalUseOnly`/`public` booleans are validated; the original extension
+must agree with the decoded PNG/JPEG format. StaticResource requires its actual
+image MIME type and valid cache-control setting. Missing/duplicate descriptors,
+conflicting inline bodies, unsupported properties and other envelope diagnostics
+remain partial. Both evidence hashes are retained and paired on every build,
+including cached-fact reuse. A Document's folder must independently exist in the
+current scoped declarations; it is never synthesized from the filename.
+
+`DocumentFolder` handles the Metadata API's extensionless MDAPI folder XML and
+DX `.documentFolder-meta.xml` source form. Required display name, access type,
+public-folder access and exact explicit identity are checked. Labels remain
+literal; group/role share recipients require independent metadata declarations.
+User/manager recipients emit `metadata_only_identity_boundary`; legacy sharing
+selectors and other unverified recipient kinds remain partial. Folder definition
+coverage does not evaluate effective access or expand membership.
+
+Storage integrations can pass `load_source(source) -> Source` to `build_graph`.
+It is called only for cache misses, must preserve the inventoried fingerprint,
+and lets the caller load bounded batches without retaining all binary bodies.
+The integration is responsible for authorization, size limits and verifying the
+supplied bytes against its stored hash. Cache-hit parse/reuse counters remain
+accurate. The engine makes no database or Salesforce calls itself.
+
 ## Literal CSV resource payloads (engine 21)
 
 A StaticResource body is assessed as literal CSV only when its current adjacent
@@ -251,8 +298,9 @@ cross-file proof even when syntax facts are reused. Other descriptor warnings
 still prevent semantic component coverage. A valid literal dataset can have no
 outgoing metadata dependencies; actual callers remain incoming usages.
 
-Images, binary archives, JavaScript resources and SiteDotCom payloads are not
-covered by this CSV contract. Their existing gaps remain visible.
+Images use the separate engine-22 contract above. Binary archives, JavaScript
+resources and SiteDotCom payloads are not covered by either payload contract;
+their gaps remain visible.
 
 ## Static schema reflection (engine 20)
 

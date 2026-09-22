@@ -6,6 +6,7 @@ Contracts are from the Salesforce Metadata API v68 field tables.
 from __future__ import annotations
 
 import re
+from pathlib import PurePosixPath
 
 BRAND_IMAGES = frozenset("BANNER_IMAGE BRAND_IMAGE GROUP_IMAGE GROUPS_BANNER_IMAGE PROFILE_BANNER_IMAGE USER_IMAGE".split())
 BRAND_LITERALS = frozenset("ACCENT_COLOR_1 ACCENT_COLOR_2 ACCENT_COLOR_3 ACCENT_CONTAINER_CONTENT_COLOR_1 ACCENT_CONTAINER_CONTENT_COLOR_2 ACCENT_CONTAINER_CONTENT_COLOR_3 BRAND_COLOR CONTAINER_ACCENT_COLOR_1 CONTAINER_ACCENT_COLOR_2 CONTAINER_ACCENT_COLOR_3 HEADER_BACKGROUND_COLOR LINK_AS_BACKGROUND OVERRIDE_A11Y_COLOR OVERRIDE_LOADING_PAGE PAGE_BACKGROUND_COLOR".split())
@@ -74,9 +75,26 @@ def parse_asset(facts, root, kind, *, issue, scalar, ref, children):
                 scalar(version, "pathOnClient", required=True)
         # Original client filenames and zip-entry paths are not component names.
     elif kind == "Document":
+        if facts.source.path.endswith("-meta.xml"):
+            for tag in ("internalUseOnly", "public"):
+                value = scalar(root, tag, required=True)
+                if value and value.text.strip() not in {"true", "false", "1", "0"}:
+                    issue("document_boolean_invalid", value, property=tag)
+            for tag in ("description", "keywords", "name"):
+                scalar(root, tag)
+            explicit = scalar(root, "fullName", required=bool(children(root, "fullName")))
+            if explicit and explicit.text.strip() != facts.source.full_name:
+                issue("asset_descriptor_identity_mismatch", explicit)
+            if children(root, "content"):
+                issue("asset_inline_content_unverified")
+            from .image_payloads import IMAGE_EXTENSIONS, IMAGE_MIME_TYPES
+            path = facts.source.path.removesuffix("-meta.xml")
+            image_format = IMAGE_EXTENSIONS.get(PurePosixPath(path).suffix.lower())
+            facts.asset_descriptor = {"payload_path": path,
+                                      "content_type": next(iter(IMAGE_MIME_TYPES[image_format])) if image_format else ""}
         folder, slash, _ = facts.source.full_name.rpartition("/")
         if slash and folder:
-            ref(root, "DocumentFolder", "belongs_to", name=folder)
+            ref(root, "DocumentFolder", "belongs_to", name=folder, identity_contract="document_folder")
         else:
             issue("document_folder_context_missing")
     elif kind == "GlobalValueSet":

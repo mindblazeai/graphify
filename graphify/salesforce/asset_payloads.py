@@ -80,27 +80,31 @@ def paired_asset_facts(facts: list[dict]) -> list[dict]:
     facts are reused. Exact component identity, namespace and adjacent source
     path are all required; MIME is never inferred from a basename or content.
     """
+    from .image_payloads import IMAGE_MIME_TYPES
+    formats = {"csv": CSV_MIME_TYPES, **IMAGE_MIME_TYPES}
+    kinds = {"StaticResource", "Document"}
     descriptors = {}
     payload_counts = {}
     for fact in facts:
-        if fact.get("asset_payload"):
-            key = (fact["coverage"]["full_name"], fact["coverage"]["source_file"])
-            payload_counts[key] = payload_counts.get(key, 0) + 1
+        key = (fact["coverage"]["metadata_type"], fact["coverage"]["full_name"], fact["coverage"]["source_file"])
+        payload_counts[key] = payload_counts.get(key, 0) + 1
         descriptor = fact.get("asset_descriptor")
-        if descriptor and fact["coverage"]["metadata_type"] == "StaticResource":
-            key = (fact["coverage"]["full_name"], descriptor["payload_path"])
+        if descriptor and fact["coverage"]["metadata_type"] in kinds:
+            key = (fact["coverage"]["metadata_type"], fact["coverage"]["full_name"], descriptor["payload_path"])
             descriptors.setdefault(key, []).append(fact)
     replacements = {}
     for fact in facts:
         payload = fact.get("asset_payload")
-        if not payload or payload.get("format") != "csv" or fact["coverage"]["metadata_type"] != "StaticResource":
+        if not payload or payload.get("format") not in formats or fact["coverage"]["metadata_type"] not in kinds:
             continue
-        key = (fact["coverage"]["full_name"], fact["coverage"]["source_file"])
+        if fact["coverage"]["metadata_type"] == "Document" and payload["format"] == "csv":
+            continue
+        key = (fact["coverage"]["metadata_type"], fact["coverage"]["full_name"], fact["coverage"]["source_file"])
         matches = descriptors.get(key, [])
         if len(matches) != 1 or payload_counts[key] != 1:
             continue
         descriptor = matches[0]
-        if descriptor["asset_descriptor"]["content_type"] not in CSV_MIME_TYPES:
+        if descriptor["asset_descriptor"]["content_type"] not in formats[payload["format"]]:
             continue
         owner = fact["nodes"][0]
         primary = descriptor["nodes"][0]
@@ -114,7 +118,7 @@ def paired_asset_facts(facts: list[dict]) -> list[dict]:
             level = "partial" if updated["diagnostics"] else "semantic"
             updated["coverage"]["level"] = level
             for node in updated["nodes"]:
-                node.update(proof, coverage=level, content_analysis="literal_csv",
+                node.update(proof, coverage=level, content_analysis="literal_csv" if payload["format"] == "csv" else "raster_image",
                             source_files=[proof["source_file"], payload["source_file"]],
                             payload_analysis=dict(payload),
                             binding_evidence=[{**{k: payload[k] for k in ("source_file", "source_sha")},

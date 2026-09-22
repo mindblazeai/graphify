@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-21"
+ENGINE_VERSION = "salesforce-22"
 
 
 def salesforce_id(value) -> str | None:
@@ -33,6 +33,13 @@ class Source:
     # unchanged source body is omitted and its existing facts will be reused.
     content_sha: str | None = None
     salesforce_id: str | None = None
+    # Raw bytes are never serialized into graph/facts or converted to text.
+    # Trusted stores may omit them only when matching cached facts are reused.
+    binary_content: bytes | None = None
+
+    @property
+    def actual_sha(self) -> str:
+        return hashlib.sha256(self.binary_content if self.binary_content is not None else self.content.encode()).hexdigest()
 
     @property
     def component_id(self) -> str:
@@ -41,7 +48,7 @@ class Source:
     @property
     def fingerprint(self) -> str:
         return hashlib.sha256(json.dumps(
-            [ENGINE_VERSION, self.path, self.content_sha or hashlib.sha256(self.content.encode()).hexdigest(), self.metadata_type,
+            [ENGINE_VERSION, self.path, self.content_sha or self.actual_sha, self.metadata_type,
              self.full_name, self.namespace, self.source_kind, self.salesforce_id],
             ensure_ascii=False, separators=(",", ":"),
         ).encode()).hexdigest()
@@ -52,7 +59,7 @@ class Facts:
 
     def __init__(self, source: Source):
         self.source = source
-        self.source_sha = hashlib.sha256(source.content.encode()).hexdigest()
+        self.source_sha = source.actual_sha
         self.nodes: dict[str, dict] = {}
         self.references: list[dict] = []
         self.diagnostics: list[dict] = []
