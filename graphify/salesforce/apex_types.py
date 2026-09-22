@@ -47,12 +47,14 @@ def platform_methods():
 
 PLATFORM_TYPES = {"void", "object", "string", "blob", "boolean", "integer", "long", "double", "decimal",
                   "date", "datetime", "time", "url", "pagereference", "id", "list", "set", "map",
-                  "exception", "apexpages", "encodingutil", "system"}
+                  "exception", "apexpages", "encodingutil", "system", "schema"}
+
+SCHEMA_TYPES = {"sobjecttype", "describesobjectresult", "recordtypeinfo"}
 
 
 def platform_type(raw):
     base, args = split_type(raw)
-    name = "System." + base.casefold().removeprefix("system.")
+    name = base.casefold() if base.casefold().startswith("schema.") else "System." + base.casefold().removeprefix("system.")
     return name + ("<" + ",".join(platform_type(a) for a in args) + ">" if args else "")
 
 
@@ -69,14 +71,18 @@ class Value:
     name: str
     static: bool | None = False
     evidence: tuple = ()
+    schema: tuple = ()
+    selector: str | None = None
 
 
 class ReceiverBinder:
     def __init__(self, nodes, lookup, resolve_method, field_path, parents):
+        from .apex_schema import SchemaBinder
         self.nodes, self.lookup = nodes, lookup
         self.resolve_method, self.field_path, self.parents = resolve_method, field_path, parents
         self.use = None
         self.references = []
+        self.schema = SchemaBinder(self)
 
     def qualify(self, name, owner, depth=0):
         if not isinstance(name, str) or not name or len(name) > 1024 or depth > 20:
@@ -95,6 +101,8 @@ class ReceiverBinder:
                 if found:
                     return found[0]["name"] if len(found) == 1 and not args else ""
         short = base.casefold().removeprefix("system.")
+        if short.startswith("schema.") and short.removeprefix("schema.") in SCHEMA_TYPES and not args:
+            return short if self.qualify("Schema", owner, depth + 1) == "System.schema" else ""
         if short not in PLATFORM_TYPES:
             # An independently declared schema/class identity is required. An
             # absent class name cannot masquerade as a platform type.
@@ -131,6 +139,8 @@ class ReceiverBinder:
         kind = expr[0]
         if kind == "null":
             return Value("null")
+        if kind == "metadata_key":
+            return Value("System.String", selector=expr[1])
         if kind == "type":
             name = self.qualify(expr[1], owner)
             return Value(name, expr[2]) if name else None
@@ -163,6 +173,9 @@ class ReceiverBinder:
         return None
 
     def field(self, receiver, name, relation, line):
+        handled, result = self.schema.field(receiver, name, line)
+        if handled:
+            return result
         owners = self.lookup("Type", receiver.name, self.use.get("namespace", ""))
         seen = set()
         while owners:
@@ -194,6 +207,9 @@ class ReceiverBinder:
         return None
 
     def call(self, receiver, member, arguments, line):
+        handled, result = self.schema.call(receiver, member, arguments, line)
+        if handled:
+            return result
         raw_types = [arg.name if arg else "" for arg in arguments]
         base, generic = split_type(receiver.name)
         collection = canonical(base)
@@ -264,6 +280,9 @@ class ReceiverBinder:
             args = [self.expression(arg, owner) for arg in use["arguments"]]
             return self.call(receiver, use["member"], args, use["line"]) is not None, self.references
         if use["operation"] == "field":
+            handled, result = self.schema.field(receiver, use["member"], use["line"])
+            if handled:
+                return result is not None, self.references
             fields = self.field_path(receiver.name + "." + use["member"], use.get("namespace", ""))
             if len(fields) == 1:
                 evidence = self.evidence(receiver.evidence)

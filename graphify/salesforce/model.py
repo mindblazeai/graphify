@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-19"
+ENGINE_VERSION = "salesforce-20"
 
 
 def salesforce_id(value) -> str | None:

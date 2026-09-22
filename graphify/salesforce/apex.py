@@ -1,6 +1,7 @@
 """Apex syntax facts from the sfapex Tree-sitter grammar (including SOQL/SOSL)."""
 from __future__ import annotations
 
+import hashlib
 import re
 
 from .model import Facts
@@ -194,7 +195,26 @@ def parse_apex(facts: Facts) -> None:
         return {text(field(child, "left") if child.type == "assignment_expression" else field(child, "name")).casefold()
                 for child in walk(n) if child.type in {"assignment_expression", "variable_declarator"}}
 
-    def expression(n, variables, class_name, trigger_object, depth=0, budget=None):
+    def selector_argument(n, argument, constants):
+        """Retain only bounded metadata selector keys, never arbitrary literals."""
+        receiver = field(n, "object")
+        if (text(field(n, "name")).casefold() not in {"get", "containskey"}
+                or not receiver or receiver.type != "method_invocation"):
+            return None
+        selector = text(field(receiver, "name")).casefold()
+        if selector not in {"getrecordtypeinfosbydevelopername", "getrecordtypeinfosbyid", "getglobaldescribe"}:
+            return None
+        value = constant_string(argument, constants or {})
+        pattern = r"[A-Za-z0-9]{15}(?:[A-Za-z0-9]{3})?" if selector.endswith("byid") else r"[A-Za-z_][A-Za-z0-9_]{0,254}"
+        if value is None or not re.fullmatch(pattern, value):
+            return None
+        # Syntax alone cannot prove the receiver is Salesforce's Schema: a
+        # customer method can have the same spelling. Retain only a digest and
+        # match it against independent scoped metadata at bind time.
+        value = value[:15] if selector.endswith("byid") else value
+        return ["metadata_key", hashlib.sha256(value.encode()).hexdigest()]
+
+    def expression(n, variables, class_name, trigger_object, depth=0, budget=None, constants=None):
         budget = [256] if budget is None else budget
         budget[0] -= 1
         if depth > 20 or budget[0] < 0:
@@ -208,32 +228,33 @@ def parse_apex(facts: Facts) -> None:
             return ["type", "System." + {"string_literal":"String", "int":"Integer", "boolean":"Boolean",
                              "decimal_floating_point_literal":"Decimal"}[n.type], False]
         if n.type == "parenthesized_expression" and len(n.named_children) == 1:
-            return expression(n.named_children[0], variables, class_name, trigger_object, depth+1, budget)
+            return expression(n.named_children[0], variables, class_name, trigger_object, depth+1, budget, constants)
         if n.type in {"object_creation_expression", "array_creation_expression", "cast_expression"}:
             return ["type", type_name(field(n,"type")), False]
         if n.type == "array_access":
-            return ["index", expression(field(n,"array"), variables, class_name, trigger_object, depth+1, budget)]
+            return ["index", expression(field(n,"array"), variables, class_name, trigger_object, depth+1, budget, constants)]
         if n.type == "method_invocation":
             args = field(n,"arguments")
             if args and len(args.named_children)>32:
                 return ["unknown"]
-            return ["call", expression(field(n,"object"), variables, class_name, trigger_object, depth+1, budget),
+            return ["call", expression(field(n,"object"), variables, class_name, trigger_object, depth+1, budget, constants),
                     text(field(n,"name")),
-                    [expression(a, variables, class_name, trigger_object, depth+1, budget) for a in (args.named_children if args else [])[:32]], line(n)]
+                    [selector_argument(n, a, constants) or expression(a, variables, class_name, trigger_object, depth+1, budget, constants)
+                     for a in (args.named_children if args else [])[:32]], line(n)]
         if n.type == "field_access":
             # An explicit System type token is not an instance property. A
             # variable named System still takes precedence over that spelling.
             if (value.casefold().startswith("system.") and value.count(".")==1
                     and "system" not in variables):
                 return ["type", value, True]
-            return ["field", expression(field(n,"object"), variables, class_name, trigger_object, depth+1, budget),
+            return ["field", expression(field(n,"object"), variables, class_name, trigger_object, depth+1, budget, constants),
                     text(field(n,"field")), line(n)]
         if n.type in {"identifier", "this", "super"}:
             typ = receiver_type(n, variables, class_name, trigger_object)
             return ["type", typ, False if value.casefold() in variables or value in {"this","super"} else True]
         return ["unknown"]
 
-    def defer(n, owner, class_name, variables, trigger_object, operation, member, relation="calls"):
+    def defer(n, owner, class_name, variables, trigger_object, operation, member, relation="calls", constants=None):
         key = f"{src.path}:{owner}:{n.start_byte}:{n.end_byte}:{operation}"
         args = field(n, "arguments")
         facts.apex_deferred.append({
@@ -241,8 +262,9 @@ def parse_apex(facts: Facts) -> None:
             "namespace":src.namespace, "line":line(n), "lexical_owner":class_name,
             "operation":operation, "member":member, "relation":relation,
             "bounded_out":bool(args and len(args.named_children)>32),
-            "receiver":expression(field(n,"object"), variables, class_name, trigger_object),
-            "arguments":[expression(a, variables, class_name, trigger_object) for a in (args.named_children if args else [])[:32]],
+            "receiver":expression(field(n,"object"), variables, class_name, trigger_object, constants=constants),
+            "arguments":[selector_argument(n, a, constants) or expression(a, variables, class_name, trigger_object, constants=constants)
+                         for a in (args.named_children if args else [])[:32]],
         })
         facts.level = "partial"
         facts.issue("apex_receiver_type_unresolved", line(n), member=member, deferred_key=key)
@@ -415,12 +437,16 @@ def parse_apex(facts: Facts) -> None:
                 else:
                     facts.level = "partial"
                     facts.issue("dynamic_type_unresolved", line(n))
+            elif (obj.casefold().startswith(("schema.", "system.schema"))
+                    or obj.casefold().endswith(".sobjecttype")
+                    or (obj.casefold() == "schema" and method.casefold() == "getglobaldescribe")):
+                defer(n, owner, class_name, variables, trigger_object, "call", method, constants=constants)
             elif obj and not builtin(obj):
                 # These native classes were not in the historic builtin list.
                 # Defer them instead of inventing ApexMethod metadata or
                 # suppressing a real customer declaration with the same name.
                 if type_parts(obj)[0] in {"url", "encodingutil"}:
-                    defer(n, owner, class_name, variables, trigger_object, "call", method)
+                    defer(n, owner, class_name, variables, trigger_object, "call", method, constants=constants)
                     for child in n.named_children:
                         visit(child, owner, class_name, variables, trigger_object, constants)
                     return
@@ -432,7 +458,7 @@ def parse_apex(facts: Facts) -> None:
                 facts.ref(owner, "ApexMethod", obj + "." + method, "calls", line(n),
                           arity=len(args), argument_types=arg_types)
             elif not obj:
-                defer(n, owner, class_name, variables, trigger_object, "call", method)
+                defer(n, owner, class_name, variables, trigger_object, "call", method, constants=constants)
         if kind == "object_creation_expression":
             target = type_name(field(n, "type"))
             if target and not builtin(target):
@@ -456,12 +482,15 @@ def parse_apex(facts: Facts) -> None:
                 # The outer field_access captures the whole namespaced label.
                 if not n.parent or n.parent.type != "field_access":
                     facts.ref(owner, "CustomLabel", label_name, "references", line(n))
+            elif (label_path.casefold().startswith("schema.sobjecttype.")
+                    or (member.casefold() == "sobjecttype" and receiver.casefold() != "schema")):
+                defer(n, owner, class_name, variables, trigger_object, "field", member, constants=constants)
             elif receiver and not builtin(receiver):
                 relation = "writes" if n.parent and n.parent.type == "assignment_expression" and field(n.parent, "left") == n else "reads"
                 facts.ref(owner, "FieldPath", receiver + "." + member, relation, line(n))
             elif not receiver:
                 relation = "writes" if n.parent and n.parent.type == "assignment_expression" and field(n.parent,"left")==n else "reads"
-                defer(n, owner, class_name, variables, trigger_object, "field", member, relation)
+                defer(n, owner, class_name, variables, trigger_object, "field", member, relation, constants=constants)
         # Branches/loops/nested blocks can mutate an outer variable. Do not
         # carry a guessed branch value into a later query. No Apex is executed.
         control = kind in {"if_statement", "for_statement", "enhanced_for_statement", "while_statement", "do_statement", "switch_expression", "try_statement"}

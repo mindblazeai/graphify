@@ -228,6 +228,32 @@ also check holiday sibling isolation and Security → EmailTemplate → field
 dependency paths. These are supported static contracts, not complete semantics
 for every Settings root or a claim that every org has those references.
 
+## Static schema reflection (engine 20)
+
+Verified `Schema.SObjectType.Account`, `Account.SObjectType.getDescribe()` and
+literal `Schema.getGlobalDescribe().get('Account')` chains link the independently
+indexed object. Developer-name selectors from
+`getRecordTypeInfosByDeveloperName()` link the actual object-scoped RecordType;
+`getRecordTypeInfosById()` requires an independently supplied, case-sensitive
+metadata ID. Both retain the caller's source hash/line and available declaration
+proofs. Catalog-only targets can have incoming references, but are never presented
+as captured source excerpts.
+
+`apex_schema.json` pins 35 reviewed signatures from the same metadata-only
+Tooling API v67 capture as the platform catalog. Return signatures alone do not
+prove a metadata identity. The [Apex reference](https://resources.docs.salesforce.com/latest/latest/en-us/sfdc/pdf/salesforce_apex_reference_guide.pdf)
+distinguishes developer names from localized record-type labels. ByName selectors,
+runtime keys/IDs, unreviewed field-map reflection and unknown declarations remain
+partial. Nothing executes Apex or queries User/RecordType rows.
+
+Only bounded selector constants are considered, and reusable syntax facts retain
+their SHA-256 digests rather than literal values. Binding matches independent
+in-scope declarations; removing a declaration or excluding its package invalidates
+the link even when the caller's syntax facts are cached. Customer classes and
+variables named `Schema` cannot inherit platform shortcuts. The 45 reflection
+regressions cover these boundaries, direct-token usages, arity, source provenance,
+wrong-case keys, ID/object mismatches and incremental rebinding.
+
 ## Bounded Apex receiver typing (engine 19)
 
 Deferred receiver expressions are rebound against the **current scoped** class,
@@ -259,7 +285,7 @@ Expression traversal is bounded by depth, node and argument limits. Each nested
 call has its own byte-span identity; resolving an inner call cannot clear an
 unresolved outer call. Unknown types, unsupported platform APIs, ambiguous
 overloads and other syntax/retrieval diagnostics are not promoted to complete.
-This is not a complete Apex compiler, runtime evaluation, reflection support or
+This is not a complete Apex compiler, runtime evaluation, complete reflection support or
 proof of effective visibility/access. No User or business-record lookup occurs.
 
 ## Maintenance and verification
@@ -268,9 +294,10 @@ proof of effective visibility/access. No User or business-record lookup occurs.
 python scripts/build_salesforce_registry.py /path/to/metadataRegistry.json 12.37.1
 python scripts/build_salesforce_settings_literals.py /path/to/pinned-metadata-docs
 python scripts/build_salesforce_apex_platform.py /path/to/captured-v67-system-symbols.json
+python scripts/build_salesforce_apex_schema.py /path/to/captured-v67-system-symbols.json
 uv run --extra salesforce pytest tests/test_salesforce_graph.py tests/test_salesforce_permissions.py tests/test_salesforce_declarative.py tests/test_salesforce_experience.py tests/test_salesforce_translations_assets.py tests/test_salesforce_policies.py tests/test_salesforce_external_clients.py tests/test_salesforce_setup.py tests/test_salesforce_settings.py tests/test_languages.py
 ```
 
 The registry records its source hash/version and Salesforce's Apache-2.0 attribution. Graphify's upstream Apache-2.0 license and NOTICE remain in force; the grammar-pack distribution retains its upstream grammar licenses. No Salesforce customer source is included in the fixtures.
 
-The engine-19 full fork suite passes 13,441 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions, 6,186 additional Settings/Network cases, 165 nested-settings cases and 46 bounded Apex receiver cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.
+The engine-20 full fork suite passes 13,486 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions, 6,186 additional Settings/Network cases, 165 nested-settings cases, 46 bounded Apex receiver cases and 45 static reflection cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.
