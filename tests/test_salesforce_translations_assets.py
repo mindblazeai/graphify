@@ -140,7 +140,7 @@ def test_wrong_translation_root_identity_and_unknown_legacy_field_shape_stay_par
 
 
 def asset(extra=""):
-    return source("ContentAsset", f"<ContentAsset>{extra}<versions><version><number>1</number><pathOnClient>{{!Case.False__c}}.png</pathOnClient></version></versions></ContentAsset>")
+    return source("ContentAsset", f"<ContentAsset><language>en_US</language>{extra}<masterLabel>Example</masterLabel><versions><version><number>1</number><pathOnClient>{{!Case.False__c}}.png</pathOnClient></version></versions></ContentAsset>")
 
 
 def test_asset_origin_network_is_a_ref_but_binary_content_and_client_filenames_are_not():

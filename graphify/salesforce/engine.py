@@ -28,7 +28,7 @@ def extract_facts(source: Source) -> dict:
         facts.nodes[source.component_id]["source_kind"] = "hidden"
         facts.issue("source_hidden_by_salesforce", metadata_type=source.metadata_type)
     elif source.source_kind == "binary":
-        if source.metadata_type in {"Document", "StaticResource"}:
+        if source.metadata_type in {"Document", "StaticResource", "ContentAsset"}:
             from .image_payloads import parse_image_payload
             parse_image_payload(facts)
         else:

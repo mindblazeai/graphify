@@ -82,7 +82,7 @@ def paired_asset_facts(facts: list[dict]) -> list[dict]:
     """
     from .image_payloads import IMAGE_MIME_TYPES
     formats = {"csv": CSV_MIME_TYPES, **IMAGE_MIME_TYPES}
-    kinds = {"StaticResource", "Document"}
+    kinds = {"StaticResource", "Document", "ContentAsset"}
     descriptors = {}
     payload_counts = {}
     for fact in facts:
@@ -97,7 +97,7 @@ def paired_asset_facts(facts: list[dict]) -> list[dict]:
         payload = fact.get("asset_payload")
         if not payload or payload.get("format") not in formats or fact["coverage"]["metadata_type"] not in kinds:
             continue
-        if fact["coverage"]["metadata_type"] == "Document" and payload["format"] == "csv":
+        if fact["coverage"]["metadata_type"] != "StaticResource" and payload["format"] == "csv":
             continue
         key = (fact["coverage"]["metadata_type"], fact["coverage"]["full_name"], fact["coverage"]["source_file"])
         matches = descriptors.get(key, [])
@@ -123,5 +123,7 @@ def paired_asset_facts(facts: list[dict]) -> list[dict]:
                             payload_analysis=dict(payload),
                             binding_evidence=[{**{k: payload[k] for k in ("source_file", "source_sha")},
                                                "line": 1, "status": "captured"}])
+                if "asset_version" in descriptor["asset_descriptor"]:
+                    node["payload_analysis"]["asset_version"] = descriptor["asset_descriptor"]["asset_version"]
             replacements[id(original)] = updated
     return [replacements.get(id(fact), fact) for fact in facts]

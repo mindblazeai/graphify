@@ -54,26 +54,8 @@ def parse_asset(facts, root, kind, *, issue, scalar, ref, children):
         facts.asset_descriptor = {"payload_path": facts.source.path.removesuffix("-meta.xml"),
                                   "content_type": mime.text.strip().casefold() if mime else ""}
     if kind == "ContentAsset":
-        ref(scalar(root, "originNetwork"), "Network", "belongs_to")
-        for relationships in children(root, "relationships"):
-            for link in relationships.children:
-                if link.tag not in {"emailTemplate", "insightsApplication", "network", "organization", "workspace"}:
-                    continue
-                access = scalar(link, "access", required=True)
-                if access and access.text.strip() not in {"VIEWER", "COLLABORATOR", "INFERRED"}:
-                    issue("asset_link_access_unsupported", access)
-                # The provider explicitly reserves link.name for future use.
-                # Do not bind a same-named template/network from that string.
-                if link.tag != "organization" or scalar(link, "name"):
-                    issue("asset_link_identity_unverified", link)
-        versions = children(root, "versions")
-        if len(versions) != 1 or not children(versions[0], "version"):
-            issue("asset_versions_missing_or_ambiguous")
-        for versions_entry in versions:
-            for version in children(versions_entry, "version"):
-                scalar(version, "number", required=True)
-                scalar(version, "pathOnClient", required=True)
-        # Original client filenames and zip-entry paths are not component names.
+        from .content_assets import parse_content_asset
+        parse_content_asset(facts, root, issue=issue, scalar=scalar, ref=ref, children=children)
     elif kind == "Document":
         if facts.source.path.endswith("-meta.xml"):
             for tag in ("internalUseOnly", "public"):

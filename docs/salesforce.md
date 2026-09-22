@@ -32,6 +32,7 @@ Use the Salesforce command for cross-file metadata binding; the normal Graphify 
 | Asset envelopes and notification actions | Explicit asset-origin network and document-folder links; notification API actions → Apex; payload analysis limits remain partial |
 | CSV static resources | Exact adjacent descriptor/body pairing for `text/csv` and `application/csv`; bounded literal tables, both source hashes retained; cell values are not metadata references |
 | Document and StaticResource images | Bounded PNG/JPEG validation from original bytes; exact descriptor pairing, both source hashes, independently declared document folders; pixels and image metadata are not code |
+| Original ContentAsset images | Single-version PNG/JPEG bytes paired with a validated Original envelope and matching client-file format; reserved links and unsupported packaging remain partial |
 | Document folders | Required labels and typed access settings; independently declared group/role share targets; User/manager and unverified legacy share identities remain partial |
 | Restriction, prompt and notification policies | Bounded field-restriction expressions/field sets; prompt images and documented visibility filters; isolated notification delivery settings |
 | Data-cleaning mappings | Context-verified input reads/output writes; virtual data-service objects remain distinct from Salesforce objects |
@@ -88,7 +89,24 @@ Engine `salesforce-10` adds typed object/field/global-value-set/standard-value-s
 
 Lightning themes bind their default BrandingSet by documented name or independently cataloged ID, preserving ambiguous collisions. Known image properties bind exact ContentAsset names or the documented local `/file-asset/<API name>` route with an optional numeric version. The original route/version remains evidence, not proof that that payload version was analyzed. Absolute URLs, org overrides, arbitrary basenames and encoded paths are not normalized into local metadata. See Salesforce's [asset URL contract](https://help.salesforce.com/s/articleView?id=004652690&language=en_US&type=1). Unknown branding properties and definition identities stay partial.
 
-ContentAsset, Document and StaticResource XML envelopes report `asset_payload_not_analyzed` unless a supported original payload is independently validated and paired (CSV or engine-22 images). Asset `originNetwork` and exact document-folder references are supported, but client filenames, zip entries and the provider-reserved asset-link `name` are not guessed as metadata identities. GlobalValueSet values and RemoteSiteSetting URLs are data/configuration, not invented dependencies; a fully understood component can legitimately have no outgoing links. Custom notification `NotificationApiAction` targets link Apex classes; client-side `Share` actions do not. These adapters do not evaluate effective sharing, download binary payloads or execute notification actions.
+ContentAsset, Document and StaticResource XML envelopes report `asset_payload_not_analyzed` unless a supported original payload is independently validated and paired (CSV, engine-22 images, or engine-24 Original ContentAssets). Asset `originNetwork` and exact document-folder references are supported, but client filenames, zip entries and the provider-reserved asset-link `name` are not guessed as metadata identities. GlobalValueSet values and RemoteSiteSetting URLs are data/configuration, not invented dependencies; a fully understood component can legitimately have no outgoing links. Custom notification `NotificationApiAction` targets link Apex classes; client-side `Share` actions do not. These adapters do not evaluate effective sharing, download binary payloads or execute notification actions.
+
+Engine `salesforce-24` validates single-version ContentAsset PNG/JPEG payloads
+against the original adjacent `.asset-meta.xml`. Salesforce's
+[pinned ContentAsset contract](https://github.com/forcedotcom/sf-skills/blob/c217b703b3e5a3c279f1a510d8703161b14bd0a5/skills/platform-metadata-api-context-get/assets/metadata_api/ContentAsset.json)
+defines `Original`/`ZippedVersions`, required language/label/version fields and
+reserved relationship names. Omitted format is accepted only for one version.
+The supported version number is a positive integer of at most nine digits;
+`pathOnClient` supplies a format check, never a metadata target or filesystem
+path to open. Actual bytes must pass the existing PNG/JPEG validation limits.
+Both original hashes, the version and byte/dimension facts remain evidence;
+pixels, labels and ancillary strings are not serialized into parser facts.
+Duplicate/missing fields, invalid booleans/enums, inline content, explicit-name
+conflicts, reserved links, unknown properties and incomplete retrieval remain
+gaps. Zipped/multiple versions, BMP/GIF/PDF/SVG and arbitrary executable payloads
+are not covered. Reused syntax is paired afresh, so changing/removing a
+descriptor or payload reopens the gap. No user or business-record lookup,
+network access, source execution or effective-sharing calculation is performed.
 
 Engine `salesforce-11` adds seven policy adapters. FieldRestrictionRule uses its documented User/Employee target and FieldSet/ComplianceCategory discriminator. A bounded expression parser extracts record-field and `$User` reads, never evaluates formulas, and rejects malformed or excessive syntax. Known-function arities are checked; unfamiliar calls/globals stay partial. Strings, function names and compliance-category values are not fields or field sets. Missing independently declared targets keep coverage partial until a later rebind supplies them.
 
