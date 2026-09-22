@@ -5,6 +5,7 @@ import json
 import os
 import re
 from pathlib import Path
+from typing import Callable
 
 from .model import ENGINE_VERSION, SCHEMA_VERSION, Facts, Source, node_id, salesforce_id
 from .registry import identify
@@ -66,7 +67,7 @@ def extract_facts(source: Source) -> dict:
 
 
 def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
-                include_facts: bool = False) -> dict:
+                include_facts: bool = False, node_filter: Callable[[dict], bool] | None = None) -> dict:
     previous_facts = previous_facts or {}
     facts_by_path = {}
     nodes: dict[str, dict] = {}
@@ -115,6 +116,14 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         # coverage when a declaration disappears and later becomes available.
         coverage.append(dict(fact["coverage"]))
 
+    # Parent files/Describe responses may declare package-owned children even
+    # when the parent itself is in scope. Filter declarations BEFORE binding;
+    # incoming references retain unresolved evidence, never an out-of-scope
+    # target's source. Syntax facts stay reusable when the scope changes.
+    if node_filter is not None:
+        nodes = {nid: n for nid, n in nodes.items() if node_filter(n)}
+        references = [ref for ref in references if ref["source"] in nodes]
+
     # listMetadata may expose a leaf-folder name while a verified retrieve
     # returns its full hierarchy. Preserve the catalog identity/deep link and
     # bind the exact source-path alias; never strip folders or guess basenames.
@@ -132,9 +141,6 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
     by_salesforce_id: dict[str, list[dict]] = {}
     fields = [n for n in nodes.values() if n["kind"] == "CustomField"]
     for n in nodes.values():
-        sfid = salesforce_id(n.get("salesforce_id"))
-        if sfid and n["id"] == n.get("component_id"):
-            by_salesforce_id.setdefault(sfid, []).append(n)
         for name in {n["name"].casefold(), *(a.casefold() for a in n.get("aliases", []))}:
             index.setdefault((n["kind"].casefold(), name), []).append(n)
         if n["kind"] == "ApexMethod":
@@ -166,6 +172,58 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
             if out:
                 return out
         return []
+
+    # FieldDefinition.DurableId is Object.00N... (standard objects) or
+    # 01I....00N... (custom objects), not a bare CustomField ID. Keep the
+    # independently supplied catalog identity even when a richer declaration
+    # inside its parent XML replaces the catalog node. Only the current scoped
+    # inventory can supply identities: an excluded package stays unresolved.
+    object_ids: dict[str, set[str]] = {}
+    for source in sources:
+        sfid = salesforce_id(source.salesforce_id)
+        if source.metadata_type == "CustomObject" and sfid and sfid.startswith("01I"):
+            object_ids.setdefault(source.component_id, set()).add(sfid)
+    identities: dict[str, dict[str, str]] = {}
+    identity_conflicts = set()
+    for n in nodes.values():
+        sfid = salesforce_id(n.get("salesforce_id"))
+        if sfid and n["id"] == n.get("component_id"):
+            identities.setdefault(n["id"], {})[sfid] = n["salesforce_id"]
+    for source in sources:
+        n = nodes.get(source.component_id)
+        if n is None:
+            continue
+        raw = source.salesforce_id
+        sfid = salesforce_id(raw)
+        if not sfid and source.metadata_type == "CustomField" and isinstance(raw, str):
+            parent, dot, field_id = raw.partition(".")
+            obj, separator, _ = source.full_name.rpartition(".")
+            fid = salesforce_id(field_id)
+            if dot and separator and fid and fid.startswith("00N"):
+                parents = lookup("CustomObject", obj, source.namespace)
+                if len(parents) == 1:
+                    parent_id = salesforce_id(parent)
+                    if parent.startswith("01I"):
+                        matches = parent_id is not None and object_ids.get(parents[0]["id"]) == {parent_id}
+                    else:
+                        matches = parent.casefold() == parents[0]["name"].casefold()
+                    if matches:
+                        sfid, raw = fid, field_id
+        if sfid:
+            identities.setdefault(n["id"], {})[sfid] = raw
+    for nid, candidates in identities.items():
+        node = nodes[nid]
+        if len(candidates) != 1:
+            # Conflicting catalog/source identities must not resolve either ID.
+            node.pop("salesforce_id", None)
+            identity_conflicts.add((node["component_id"], node["source_file"]))
+            diagnostics.append({"code": "metadata_salesforce_identity_conflict",
+                                "source_file": node["source_file"], "line": node["line"],
+                                "metadata_type": node["kind"]})
+            continue
+        sfid, raw = next(iter(candidates.items()))
+        node["salesforce_id"] = raw
+        by_salesforce_id.setdefault(sfid, []).append(node)
 
     # A large org can have tens of thousands of relationship references.
     # Scanning every field for each segment made binding quadratic (over 100M
@@ -270,6 +328,9 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
 
     def resolve(ref, intermediates=None):
         kind, name, ns = ref["target_kind"], ref["target_name"], ref.get("namespace", "")
+        if kind == "Audience" and "target_audience_container" in ref:
+            return [n for n in lookup(kind, name, ns)
+                    if n.get("audience_container", "").casefold() == ref["target_audience_container"].casefold()]
         if kind == "NotificationType":
             # Standard/provider notification names are not custom declarations.
             return lookup("CustomNotificationType", name, ns)
@@ -354,7 +415,7 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         return lookup(kind, name, ns)
 
     edges = {}
-    unverified = set()
+    unverified = identity_conflicts
     identity_issues = {}
     for original in references:
         ref = dict(original)

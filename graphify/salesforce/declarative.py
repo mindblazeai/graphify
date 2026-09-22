@@ -16,6 +16,7 @@ from .policies import SHAPES as POLICY_SHAPES, parse_policy
 from .external_clients import SHAPES as EXTERNAL_CLIENT_SHAPES, parse_external_client
 from .setup import SHAPES as SETUP_SHAPES, parse_setup
 from .settings import SHAPES as SETTINGS_SHAPES, parse_settings
+from .audience import SHAPES as AUDIENCE_SHAPES, parse_audience
 
 if TYPE_CHECKING:
     from .metadata import Element
@@ -65,6 +66,7 @@ SHAPES.update(POLICY_SHAPES)
 SHAPES.update(EXTERNAL_CLIENT_SHAPES)
 SHAPES.update(SETUP_SHAPES)
 SHAPES.update(SETTINGS_SHAPES)
+SHAPES.update(AUDIENCE_SHAPES)
 SHAPES = {kind: {path: frozenset(tags.split()) | ({"fullName"} if not path else set())
                  for path, tags in shape.items()} for kind, shape in SHAPES.items()}
 
@@ -141,7 +143,10 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
         else:
             issue("metadata_reference_context_missing", n, property=n.tag)
 
-    if kind in SETTINGS_SHAPES:
+    if kind in AUDIENCE_SHAPES:
+        parse_audience(facts, root, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind in SETTINGS_SHAPES:
         parse_settings(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
 
     elif kind in SETUP_SHAPES:
