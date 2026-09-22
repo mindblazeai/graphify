@@ -35,6 +35,10 @@ def parse_asset(facts, root, kind, *, issue, scalar, ref, children):
     if kind in {"ContentAsset", "Document", "StaticResource"}:
         facts.nodes[owner]["content_analysis"] = "not_parsed"
         issue("asset_payload_not_analyzed")
+    if kind == "StaticResource" and facts.source.path.endswith(".resource-meta.xml"):
+        mime = scalar(root, "contentType", required=True)
+        facts.asset_descriptor = {"payload_path": facts.source.path.removesuffix("-meta.xml"),
+                                  "content_type": mime.text.strip().casefold() if mime else ""}
     if kind == "ContentAsset":
         ref(scalar(root, "originNetwork"), "Network", "belongs_to")
         for relationships in children(root, "relationships"):

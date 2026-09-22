@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 SCHEMA_VERSION = 1
-ENGINE_VERSION = "salesforce-20"
+ENGINE_VERSION = "salesforce-21"
 
 
 def salesforce_id(value) -> str | None:
@@ -57,6 +57,8 @@ class Facts:
         self.references: list[dict] = []
         self.diagnostics: list[dict] = []
         self.apex_deferred: list[dict] = []
+        self.asset_descriptor: dict | None = None
+        self.asset_payload: dict | None = None
         self.level = "structural"
         self.declare(source.metadata_type, source.full_name, line=1,
                      source_kind=source.source_kind)
@@ -100,6 +102,8 @@ class Facts:
         return {"fingerprint": self.source.fingerprint,
                 "nodes": list(self.nodes.values()), "references": self.references,
                 **({"apex_deferred": self.apex_deferred} if self.apex_deferred else {}),
+                **({"asset_descriptor": self.asset_descriptor} if self.asset_descriptor else {}),
+                **({"asset_payload": self.asset_payload} if self.asset_payload else {}),
                 "diagnostics": self.diagnostics,
                 "coverage": {"source_file": self.source.path,
                              "metadata_type": self.source.metadata_type,

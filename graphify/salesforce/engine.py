@@ -41,6 +41,9 @@ def extract_facts(source: Source) -> dict:
     elif source.metadata_type == "ReportType" and source.path.startswith("salesforce-api/reportTypes/") and source.path.endswith("/status.json"):
         from .reports import parse_report_type_status
         parse_report_type_status(facts)
+    elif source.metadata_type == "StaticResource" and source.path.endswith(".resource"):
+        from .asset_payloads import parse_resource_payload
+        parse_resource_payload(facts)
     elif source.path.endswith((".cls", ".trigger", ".soql", ".sosl")):
         from .apex import parse_apex
         parse_apex(facts)
@@ -70,6 +73,7 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 include_facts: bool = False, node_filter: Callable[[dict], bool] | None = None) -> dict:
     previous_facts = previous_facts or {}
     facts_by_path = {}
+    fact_sequence = []
     nodes: dict[str, dict] = {}
     references = []
     diagnostics = []
@@ -85,6 +89,9 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
         else:
             fact = extract_facts(source)
         facts_by_path[key] = fact
+        fact_sequence.append(fact)
+    from .asset_payloads import paired_asset_facts
+    for fact in paired_asset_facts(fact_sequence):
         for value in fact["nodes"]:
             node = dict(value)
             existing = nodes.get(node["id"])

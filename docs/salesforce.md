@@ -29,6 +29,7 @@ Use the Salesforce command for cross-file metadata binding; the normal Graphify 
 | Experience Cloud and presence configuration | Network/site/template/profile links, typed navigation containers and list-view IDs, Visualforce/static site assets, moderation/keyword/user-criteria site ownership, presence profiles and statuses |
 | Translations and branding | Exact object/member/value-set translation targets; theme → branding → declared asset links; documented local file-asset routes |
 | Asset envelopes and notification actions | Explicit asset-origin network and document-folder links; notification API actions → Apex; payload analysis limits remain partial |
+| CSV static resources | Exact adjacent descriptor/body pairing for `text/csv` and `application/csv`; bounded literal tables, both source hashes retained; cell values are not metadata references |
 | Restriction, prompt and notification policies | Bounded field-restriction expressions/field sets; prompt images and documented visibility filters; isolated notification delivery settings |
 | Data-cleaning mappings | Context-verified input reads/output writes; virtual data-service objects remain distinct from Salesforce objects |
 | External client apps and menus | Explicit settings-to-app, Apex handler, custom OAuth scope, ID-bound permission/certificate and qualified attribute-field links; typed app-menu entries remain partial |
@@ -227,6 +228,27 @@ identity rebinding, timezone portability and source provenance. Service tests
 also check holiday sibling isolation and Security → EmailTemplate → field
 dependency paths. These are supported static contracts, not complete semantics
 for every Settings root or a claim that every org has those references.
+
+## Literal CSV resource payloads (engine 21)
+
+A StaticResource body is assessed as literal CSV only when its current adjacent
+`.resource-meta.xml` descriptor declares `text/csv` or `application/csv`. The
+component identity, namespace and full source path must match. CSV parsing is
+bounded to 2 MiB, 100,000 rows total, 256 columns and 16,384
+characters per cell. UTF-8 BOMs, quoted commas/newlines and doubled quotes are
+supported; malformed, ragged, oversized and unsupported tables remain partial.
+This follows the [CSV format](https://www.rfc-editor.org/rfc/rfc4180) rather than
+interpreting data as a Salesforce formula or component-name manifest.
+
+Coverage retains both descriptor and payload hashes. Public graph facts contain
+format/dimensions and provenance, not table cells. Source previews may show the
+authorized original file. Removing/changing either source invalidates the
+cross-file proof even when syntax facts are reused. Other descriptor warnings
+still prevent semantic component coverage. A valid literal dataset can have no
+outgoing metadata dependencies; actual callers remain incoming usages.
+
+Images, binary archives, JavaScript resources and SiteDotCom payloads are not
+covered by this CSV contract. Their existing gaps remain visible.
 
 ## Static schema reflection (engine 20)
 
