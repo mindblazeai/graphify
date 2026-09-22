@@ -206,7 +206,8 @@ def test_unknown_reference_shaped_properties_are_partial_not_guessed(kind):
     g = build_graph([source(kind, f"<{kind}><future><field>Account.Secret__c</field></future></{kind}>")])
     assert "metadata_xml_property_unsupported" in codes(g)
     assert g["coverage"][0]["level"] == "partial"
-    assert not g["edges"]
+    # ManagedTopics' own file identity supplies its site, independently of XML.
+    assert all(kind == "ManagedTopics" and e["target_kind"] == "Network" and e["relation"] == "belongs_to" for e in g["edges"])
 
 
 @pytest.mark.parametrize("xml", [

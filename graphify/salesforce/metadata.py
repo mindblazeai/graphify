@@ -180,7 +180,7 @@ def parse_metadata(facts: Facts) -> None:
         facts.level = "partial"
         facts.issue("xml_parse_error", getattr(exc, "lineno", 1))
         return
-    kind = root.tag if src.metadata_type == "Settings" and root.tag == "LeadConvertSettings" else src.metadata_type
+    kind = root.tag if src.metadata_type == "Settings" and root.tag.endswith("Settings") and root.tag in SHAPES else src.metadata_type
     if kind in SHAPES:
         parse_declarative(facts, root, kind)
         return
