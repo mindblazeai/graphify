@@ -194,6 +194,59 @@ def parse_apex(facts: Facts) -> None:
         return {text(field(child, "left") if child.type == "assignment_expression" else field(child, "name")).casefold()
                 for child in walk(n) if child.type in {"assignment_expression", "variable_declarator"}}
 
+    def expression(n, variables, class_name, trigger_object, depth=0, budget=None):
+        budget = [256] if budget is None else budget
+        budget[0] -= 1
+        if depth > 20 or budget[0] < 0:
+            return ["unknown"]
+        if not n:
+            return ["type", class_name, None]
+        value = text(n)
+        if n.type == "null_literal":
+            return ["null"]
+        if n.type in {"string_literal", "int", "boolean", "decimal_floating_point_literal"}:
+            return ["type", "System." + {"string_literal":"String", "int":"Integer", "boolean":"Boolean",
+                             "decimal_floating_point_literal":"Decimal"}[n.type], False]
+        if n.type == "parenthesized_expression" and len(n.named_children) == 1:
+            return expression(n.named_children[0], variables, class_name, trigger_object, depth+1, budget)
+        if n.type in {"object_creation_expression", "array_creation_expression", "cast_expression"}:
+            return ["type", type_name(field(n,"type")), False]
+        if n.type == "array_access":
+            return ["index", expression(field(n,"array"), variables, class_name, trigger_object, depth+1, budget)]
+        if n.type == "method_invocation":
+            args = field(n,"arguments")
+            if args and len(args.named_children)>32:
+                return ["unknown"]
+            return ["call", expression(field(n,"object"), variables, class_name, trigger_object, depth+1, budget),
+                    text(field(n,"name")),
+                    [expression(a, variables, class_name, trigger_object, depth+1, budget) for a in (args.named_children if args else [])[:32]], line(n)]
+        if n.type == "field_access":
+            # An explicit System type token is not an instance property. A
+            # variable named System still takes precedence over that spelling.
+            if (value.casefold().startswith("system.") and value.count(".")==1
+                    and "system" not in variables):
+                return ["type", value, True]
+            return ["field", expression(field(n,"object"), variables, class_name, trigger_object, depth+1, budget),
+                    text(field(n,"field")), line(n)]
+        if n.type in {"identifier", "this", "super"}:
+            typ = receiver_type(n, variables, class_name, trigger_object)
+            return ["type", typ, False if value.casefold() in variables or value in {"this","super"} else True]
+        return ["unknown"]
+
+    def defer(n, owner, class_name, variables, trigger_object, operation, member, relation="calls"):
+        key = f"{src.path}:{owner}:{n.start_byte}:{n.end_byte}:{operation}"
+        args = field(n, "arguments")
+        facts.apex_deferred.append({
+            "key":key, "source":owner, "source_file":src.path, "source_sha":facts.source_sha,
+            "namespace":src.namespace, "line":line(n), "lexical_owner":class_name,
+            "operation":operation, "member":member, "relation":relation,
+            "bounded_out":bool(args and len(args.named_children)>32),
+            "receiver":expression(field(n,"object"), variables, class_name, trigger_object),
+            "arguments":[expression(a, variables, class_name, trigger_object) for a in (args.named_children if args else [])[:32]],
+        })
+        facts.level = "partial"
+        facts.issue("apex_receiver_type_unresolved", line(n), member=member, deferred_key=key)
+
     def visit(n, owner, class_name, variables, trigger_object="", constants=None):
         if constants is None:
             constants = {}
@@ -233,18 +286,27 @@ def parse_apex(facts: Facts) -> None:
             body = field(n, "body")
             if body:
                 class_constants = {}
+                fields = {}
                 # Class fields may be declared below methods that use them.
                 for child in body.named_children:
                     if child.type == "field_declaration":
                         typ = type_name(field(child, "type"))
                         for decl in child.named_children:
                             if decl.type == "variable_declarator":
+                                member_name = text(field(decl, "name"))
+                                if typ and not field(child,"type").has_error:
+                                    fields.setdefault(member_name.casefold(), []).append({
+                                        "name":member_name, "type":typ, "line":line(decl),
+                                        "static":"static" in text(next((c for c in child.named_children if c.type=="modifiers"),None)).casefold().split(),
+                                    })
                                 inherited[text(field(decl, "name")).casefold()] = typ
                                 inherited[(full + "." + text(field(decl, "name"))).casefold()] = typ
                                 if "final" in text(next((c for c in child.named_children if c.type == "modifiers"), None)).casefold().split():
                                     value = constant_string(field(decl, "value"), class_constants)
                                     if value is not None:
                                         class_constants[text(field(decl, "name")).casefold()] = value
+                if fields:
+                    facts.nodes[nid]["apex_fields"] = fields
                 visit(body, nid, full, inherited, obj, class_constants)
             return
         if kind in {"method_declaration", "constructor_declaration"} and not standalone:
@@ -259,6 +321,9 @@ def parse_apex(facts: Facts) -> None:
                                any(c.type == "annotation" and text(field(c, "name")).casefold() == "istest" for c in walk(modifiers))))
             nid = facts.declare("ApexMethod", full, line(n), label=f".{name}()", is_test=is_test,
                                 owner_type=class_name, member_name=name,
+                                is_static=bool(modifiers and "static" in text(modifiers).casefold().split()),
+                                apex_signature_verified=all(not part.has_error and not part.is_missing
+                                    for part in (field(n,"name"), params_node, field(n,"type"), modifiers) if part),
                                 parameters=param_types, return_type=text(field(n, "type")))
             facts.ref(owner, "ApexMethod", full, "method", line(n))
             scoped = dict(variables)
@@ -351,6 +416,14 @@ def parse_apex(facts: Facts) -> None:
                     facts.level = "partial"
                     facts.issue("dynamic_type_unresolved", line(n))
             elif obj and not builtin(obj):
+                # These native classes were not in the historic builtin list.
+                # Defer them instead of inventing ApexMethod metadata or
+                # suppressing a real customer declaration with the same name.
+                if type_parts(obj)[0] in {"url", "encodingutil"}:
+                    defer(n, owner, class_name, variables, trigger_object, "call", method)
+                    for child in n.named_children:
+                        visit(child, owner, class_name, variables, trigger_object, constants)
+                    return
                 arg_types = []
                 for a in args:
                     arg_types.append({"string_literal": "String", "int": "Integer",
@@ -359,8 +432,7 @@ def parse_apex(facts: Facts) -> None:
                 facts.ref(owner, "ApexMethod", obj + "." + method, "calls", line(n),
                           arity=len(args), argument_types=arg_types)
             elif not obj:
-                facts.level = "partial"
-                facts.issue("apex_receiver_type_unresolved", line(n), member=method)
+                defer(n, owner, class_name, variables, trigger_object, "call", method)
         if kind == "object_creation_expression":
             target = type_name(field(n, "type"))
             if target and not builtin(target):
@@ -388,8 +460,8 @@ def parse_apex(facts: Facts) -> None:
                 relation = "writes" if n.parent and n.parent.type == "assignment_expression" and field(n.parent, "left") == n else "reads"
                 facts.ref(owner, "FieldPath", receiver + "." + member, relation, line(n))
             elif not receiver:
-                facts.level = "partial"
-                facts.issue("apex_receiver_type_unresolved", line(n), member=member)
+                relation = "writes" if n.parent and n.parent.type == "assignment_expression" and field(n.parent,"left")==n else "reads"
+                defer(n, owner, class_name, variables, trigger_object, "field", member, relation)
         # Branches/loops/nested blocks can mutate an outer variable. Do not
         # carry a guessed branch value into a later query. No Apex is executed.
         control = kind in {"if_statement", "for_statement", "enhanced_for_statement", "while_statement", "do_statement", "switch_expression", "try_statement"}

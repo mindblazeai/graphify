@@ -99,7 +99,7 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
                 for k in ("reference_to", "relationship_name", "data_type", "annotations",
                           "related_object", "recipient_object", "is_test", "child_relationships",
                           "parent_relationship_name", "report_type", "report_columns", "report_columns_source", "report_type_api_status", "schema_roots",
-                          "salesforce_id", "permission_api_status", "permission_api_status_source"):
+                          "salesforce_id", "permission_api_status", "permission_api_status_source", "apex_fields"):
                     if node.get(k):
                         existing[k] = node[k]
                 if node.get("aliases"):
@@ -413,6 +413,53 @@ def build_graph(sources: list[Source], *, previous_facts: dict | None = None,
             return [n for controller in aura_controllers.get(component, [])
                     for n in resolve_method({**ref, "target_name": controller + "." + name})]
         return lookup(kind, name, ns)
+
+    # Receiver syntax stays in reusable source facts; its type depends on the
+    # CURRENT scoped declaration inventory, never on a previous binding result.
+    from .apex_types import ReceiverBinder
+    binder = ReceiverBinder(nodes, lookup, resolve_method, field_path, parent_types)
+    completed = set()
+    def reference_key(ref):
+        target = ref["target_name"]
+        signature = ()
+        if ref["target_kind"] == "ApexMethod":
+            found = resolve_method(ref)
+            if len(found) == 1:
+                target = found[0]["id"]
+            else:
+                signature = (ref.get("arity"),tuple(ref.get("argument_types",[])))
+        return (ref["source"],ref["target_kind"],target,ref["relation"],ref["source_file"],
+                ref["line"],ref.get("apex_member"),signature)
+    known_references = {reference_key(ref) for ref in references}
+    for fact in facts_by_path.values():
+        for use in fact.get("apex_deferred", []):
+            if use["source"] not in nodes:
+                continue
+            done, inferred = binder.bind(use)
+            if done:
+                completed.add(use["key"])
+            for ref in inferred:
+                key = reference_key(ref)
+                if key not in known_references:
+                    references.append(ref)
+                    known_references.add(key)
+    if completed:
+        diagnostics = [d for d in diagnostics if d.get("deferred_key") not in completed]
+        complete_sources = {
+            (node_id(f["coverage"]["metadata_type"], f["coverage"]["full_name"]), f["coverage"]["source_file"])
+            for f in facts_by_path.values() if f.get("apex_deferred")
+            and f["coverage"]["level"] == "partial"
+            and all(d.get("deferred_key") in completed for d in f["diagnostics"])
+        }
+        for entry in coverage:
+            if (node_id(entry["metadata_type"],entry["full_name"]),entry["source_file"]) in complete_sources:
+                entry["level"] = "semantic"
+        still_partial = {node_id(c["metadata_type"],c["full_name"]) for c in coverage
+                         if c["level"] in {"partial","unparsed"}}
+        for node in nodes.values():
+            if ((node.get("component_id"),node.get("source_file")) in complete_sources
+                    and node.get("component_id") not in still_partial and node.get("coverage")=="partial"):
+                node["coverage"] = "semantic"
 
     edges = {}
     unverified = identity_conflicts

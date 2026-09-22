@@ -118,7 +118,7 @@ Report-type Analytics responses use `ReportType` sources at `salesforce-api/repo
 
 Foldered metadata retains its catalog identity when a verified source path contains a fuller folder hierarchy. The exact path-derived name is indexed as an alias for cross-file references. Basenames are never guessed; colliding aliases remain ambiguous. Storage integrations must verify returned file ownership before constructing a `Source`.
 
-Apex collection receivers retain their complete generic type. Platform list/map/set calls do not become fabricated methods on the element's object. Indexed elements, typed `get()` results, map `values()`, nested collections and collection DML retain their actual field/object dependencies. Unknown custom-method return receivers produce `apex_receiver_type_unresolved` and partial coverage rather than invented field paths. Collection overloads remain distinct from element overloads.
+Apex collection receivers retain their complete generic type. Platform list/map/set calls do not become fabricated methods on the element's object. Indexed elements, typed `get()` results, map `values()`, nested collections and collection DML retain their actual field/object dependencies. Cross-file return receivers use the bounded engine-19 contract below; unproven receivers still produce `apex_receiver_type_unresolved` and partial coverage rather than invented field paths. Collection overloads remain distinct from element overloads.
 
 Nodes and edges have deterministic source-local ordering, so repeated provenance stays close enough for ordinary gzip to compress effectively. This changes ordering, not identities or relationships; consumers must use IDs, not array positions.
 
@@ -228,14 +228,49 @@ also check holiday sibling isolation and Security → EmailTemplate → field
 dependency paths. These are supported static contracts, not complete semantics
 for every Settings root or a claim that every org has those references.
 
+## Bounded Apex receiver typing (engine 19)
+
+Deferred receiver expressions are rebound against the **current scoped** class,
+method and schema declarations. Supported forms include method return chains,
+overload selection, inherited/nested class members, typed properties, indexed
+collections, and generic List/Map results. A returned `Account` can establish a
+real `Account.Name` field usage. A DTO property instead references the actual
+owning Apex class with `apex_member`; it never becomes a fabricated CustomField.
+Same-component property access does not add self-usage links.
+
+The packaged `apex_platform.json` pins 332 reviewed System data-return signatures
+from Salesforce Tooling API v67.0 `completions?type=apex`. The raw provider response
+SHA-256 is `3a8c609cccb49b2383c13a6157bdc8b802a981ff4473cfc7d95c7b5fef6a9cda`.
+The generator copies only selected method names, static/instance flags, argument
+types and return types—not customer source, method bodies or documentation.
+This allows supported Date, Datetime, PageReference and other data-return chains
+to be understood without inventing platform metadata nodes. Unqualified names
+first consider scoped customer declarations; explicit System types and platform
+literal/return types cannot silently become similarly named custom classes.
+
+Call sites retain their own source hash/line plus secondary declaration evidence
+used for return/property binding. Reused syntax facts contain the unbound
+expression, never a cached final target. Removing or changing a callee, or
+excluding its package, re-evaluates the caller and restores its gap when needed.
+Storage/read APIs should omit `apex_fields` and `apex_signature_verified` from
+interactive node payloads while retaining them in the reusable fact cache.
+
+Expression traversal is bounded by depth, node and argument limits. Each nested
+call has its own byte-span identity; resolving an inner call cannot clear an
+unresolved outer call. Unknown types, unsupported platform APIs, ambiguous
+overloads and other syntax/retrieval diagnostics are not promoted to complete.
+This is not a complete Apex compiler, runtime evaluation, reflection support or
+proof of effective visibility/access. No User or business-record lookup occurs.
+
 ## Maintenance and verification
 
 ```sh
 python scripts/build_salesforce_registry.py /path/to/metadataRegistry.json 12.37.1
 python scripts/build_salesforce_settings_literals.py /path/to/pinned-metadata-docs
+python scripts/build_salesforce_apex_platform.py /path/to/captured-v67-system-symbols.json
 uv run --extra salesforce pytest tests/test_salesforce_graph.py tests/test_salesforce_permissions.py tests/test_salesforce_declarative.py tests/test_salesforce_experience.py tests/test_salesforce_translations_assets.py tests/test_salesforce_policies.py tests/test_salesforce_external_clients.py tests/test_salesforce_setup.py tests/test_salesforce_settings.py tests/test_languages.py
 ```
 
 The registry records its source hash/version and Salesforce's Apache-2.0 attribution. Graphify's upstream Apache-2.0 license and NOTICE remain in force; the grammar-pack distribution retains its upstream grammar licenses. No Salesforce customer source is included in the fixtures.
 
-The engine-18 full fork suite passes 13,395 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions, 6,186 additional Settings/Network cases and 165 nested-settings cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.
+The engine-19 full fork suite passes 13,441 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions, 6,186 additional Settings/Network cases, 165 nested-settings cases and 46 bounded Apex receiver cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.
