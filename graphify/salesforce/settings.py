@@ -14,6 +14,7 @@ from .model import salesforce_id
 from .setup import validate_literals
 from .settings_literals import SCALAR_CONTRACTS
 from .settings_features import SHAPES as FEATURE_SHAPES, parse_features
+from .settings_structured import SHAPES as STRUCTURED_SHAPES, REPEATED as STRUCTURED_REPEATED, parse_structured
 
 
 LIGHTNING_FLAGS = """enableAccessCheckCrucPref enableApiUserLtngOutAccessPref
@@ -71,7 +72,7 @@ SHAPES = {
         **{"forecastingTypeSettings/" + tag: "field label" if "Label" in tag else "field" for tag in OPPORTUNITY_LISTS},
     },
 }
-for _root, _features in FEATURE_SHAPES.items():
+for _root, _features in {**FEATURE_SHAPES, **STRUCTURED_SHAPES}.items():
     _shape = SHAPES.setdefault(_root, {})
     for _path, _fields in _features.items():
         _shape[_path] = _shape.get(_path, "") + " " + _fields
@@ -110,6 +111,7 @@ def parse_settings(facts, root, kind, *, issue, scalar, ref, children):
 
     repeated = tuple(path + "/field" for path in SHAPES[kind]
                      if path.endswith(("SelectedSettings", "UnselectedSettings")))
+    repeated += STRUCTURED_REPEATED.get(kind, ())
     validate_literals(root, SHAPES[kind], issue=issue, scalar=scalar, repeated=repeated)
 
     for tag, (typ, required, allowed) in SCALAR_CONTRACTS.get(kind, {}).items():
@@ -132,7 +134,10 @@ def parse_settings(facts, root, kind, *, issue, scalar, ref, children):
         if not valid:
             issue("settings_scalar_value_unsupported", n, property=tag, scalar_type=typ)
 
-    if kind in FEATURE_SHAPES:
+    if kind in STRUCTURED_SHAPES:
+        parse_structured(facts, root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
+
+    elif kind in FEATURE_SHAPES:
         parse_features(root, kind, issue=issue, scalar=scalar, ref=ref, children=children)
 
     elif kind == "LightningExperienceSettings":

@@ -8,7 +8,9 @@ uv run graphify-salesforce /path/to/salesforce-project --output graph.json
 # Equivalent: python -m graphify.salesforce /path/to/salesforce-project
 ```
 
-The `[all]` extra also includes the pinned Salesforce grammar pack.
+The `[salesforce]` and `[all]` extras include the pinned Salesforce grammar pack
+and timezone definitions used to validate Business Hours settings independently
+of the host operating system.
 
 Use the Salesforce command for cross-file metadata binding; the normal Graphify Apex extractor also uses the AST adapter when the extra is installed. Without the extra, the legacy extractor retains its regex fallback and reports that limitation. The general Graphify command does not automatically run this whole-org metadata pipeline.
 
@@ -195,6 +197,37 @@ page keys and record-type context are still unsupported; recognizing a field
 in the provider schema alone does not implement its semantics. Coverage is
 per supplied component, not a promise of every possible Prompt configuration.
 
+## Nested Address, Business Hours and Security settings (engine 18)
+
+These three roots have reviewed, type-scoped adapters backed by the pinned
+Salesforce metadata documentation. Address country/state codes, labels and
+integration values are literal configuration, not invented object or field
+dependencies. Required values, duplicate codes and default-country cardinality
+are checked.
+
+Business Hours definitions become owned `BusinessHoursEntry` members. Holidays
+are separate `BusinessHoursHoliday` members, including when their labels are
+identical. Explicit holiday-to-hours names bind independent declarations and
+retain source-line/hash evidence. Impact counts can roll members up to Settings;
+dependency paths must not cross unrelated sibling holidays. Weekday times,
+holiday recurrence values and dates are validated; timezone IDs use the pinned
+`tzdata==2026.2` package. This is static configuration, not a scheduling engine.
+
+Security settings validate documented network ranges, password policies,
+session settings and single-sign-on literals. `welcomeEmailTemplateId` binds
+only an independently cataloged, case-sensitive EmailTemplate ID. Names and
+wrong-type IDs are not fallbacks. Reserved `lockerTrustedResources`, unknown
+properties, malformed values and absent or ambiguous targets remain partial.
+This parser does not change security settings, read User records or evaluate
+effective access.
+
+The nested-settings suite adds 165 synthetic cases covering documented values,
+literal rejection, malformed and oversized collections, duplicate labels,
+identity rebinding, timezone portability and source provenance. Service tests
+also check holiday sibling isolation and Security → EmailTemplate → field
+dependency paths. These are supported static contracts, not complete semantics
+for every Settings root or a claim that every org has those references.
+
 ## Maintenance and verification
 
 ```sh
@@ -205,4 +238,4 @@ uv run --extra salesforce pytest tests/test_salesforce_graph.py tests/test_sales
 
 The registry records its source hash/version and Salesforce's Apache-2.0 attribution. Graphify's upstream Apache-2.0 license and NOTICE remain in force; the grammar-pack distribution retains its upstream grammar licenses. No Salesforce customer source is included in the fixtures.
 
-The Salesforce and language suites currently pass 7,704 tests (20 optional-language skips); the full fork suite passes 13,044 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions and 6,186 additional Settings/Network cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.
+The engine-18 full fork suite passes 13,395 tests (97 optional skips). This includes a parametrized identity/coverage contract for every registered type, 47 external-client/menu regressions, 71 initial setup/settings regressions, 65 Audience/field-identity/scope regressions, 6,186 additional Settings/Network cases and 165 nested-settings cases. Every generated scalar slot has positive, wrong-type, empty and nested-value tests. Fixtures also cover typed reference bindings, secret/literal rejection, malformed/bounded input, exact IDs, incremental rebinding, virtual-schema isolation and ambiguous contexts. This is a coverage contract, not a promise of complete semantics for all 533 types. Cross-object relationship binding uses precomputed parent/child schema indexes rather than scanning every field per reference. Permission record line indexing is linear in source size rather than repeatedly rescanning large captures.

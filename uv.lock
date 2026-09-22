@@ -1164,6 +1164,7 @@ all = [
     { name = "tree-sitter-ocaml" },
     { name = "tree-sitter-pascal" },
     { name = "tree-sitter-sql" },
+    { name = "tzdata" },
     { name = "watchdog" },
     { name = "yt-dlp" },
 ]
@@ -1238,6 +1239,7 @@ robot = [
 ]
 salesforce = [
     { name = "tree-sitter-language-pack" },
+    { name = "tzdata" },
 ]
 sql = [
     { name = "tree-sitter-sql" },
@@ -1376,6 +1378,8 @@ requires-dist = [
     { name = "tree-sitter-typescript", specifier = ">=0.23,<0.25" },
     { name = "tree-sitter-verilog", specifier = ">=1.0,<2.0" },
     { name = "tree-sitter-zig", specifier = ">=1.0,<2.0" },
+    { name = "tzdata", marker = "extra == 'all'", specifier = "==2026.2" },
+    { name = "tzdata", marker = "extra == 'salesforce'", specifier = "==2026.2" },
     { name = "watchdog", marker = "extra == 'all'" },
     { name = "watchdog", marker = "extra == 'watch'" },
     { name = "yt-dlp", marker = "extra == 'all'", specifier = ">=2026.7.4" },
