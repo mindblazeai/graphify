@@ -36,7 +36,20 @@ def parse_asset(facts, root, kind, *, issue, scalar, ref, children):
         facts.nodes[owner]["content_analysis"] = "not_parsed"
         issue("asset_payload_not_analyzed")
     if kind == "StaticResource" and facts.source.path.endswith(".resource-meta.xml"):
+        # Metadata API describeValueType(StaticResource), v67: both fields are
+        # required; cacheControl is exactly Private/Public. A valid payload
+        # cannot excuse an invalid or conflicting metadata envelope.
+        cache = scalar(root, "cacheControl", required=True)
+        if cache and cache.text.strip() not in {"Private", "Public"}:
+            issue("asset_cache_control_invalid", cache)
         mime = scalar(root, "contentType", required=True)
+        scalar(root, "description")
+        name = scalar(root, "fullName", required=bool(children(root, "fullName")))
+        if name and name.text.strip() != facts.source.full_name:
+            issue("asset_descriptor_identity_mismatch", name)
+        if children(root, "content"):
+            # A second inline base64 payload needs its own byte comparison.
+            issue("asset_inline_content_unverified")
         facts.asset_descriptor = {"payload_path": facts.source.path.removesuffix("-meta.xml"),
                                   "content_type": mime.text.strip().casefold() if mime else ""}
     if kind == "ContentAsset":

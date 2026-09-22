@@ -233,7 +233,11 @@ for every Settings root or a claim that every org has those references.
 
 A StaticResource body is assessed as literal CSV only when its current adjacent
 `.resource-meta.xml` descriptor declares `text/csv` or `application/csv`. The
-component identity, namespace and full source path must match. CSV parsing is
+component identity, namespace and full source path must match. Coverage is
+also gated by valid descriptor semantics: Metadata API v67's captured
+`describeValueType(StaticResource)` requires `contentType` and a `Private` or
+`Public` cache setting. Conflicting inline content and mismatched explicit names
+remain partial. CSV parsing is
 bounded to 2 MiB, 100,000 rows total, 256 columns and 16,384
 characters per cell. UTF-8 BOMs, quoted commas/newlines and doubled quotes are
 supported; malformed, ragged, oversized and unsupported tables remain partial.

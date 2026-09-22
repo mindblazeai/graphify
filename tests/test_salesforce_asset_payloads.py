@@ -152,3 +152,25 @@ def test_duplicate_source_identity_is_not_an_independent_current_proof(duplicate
     graph = build_graph([body(), descriptor(), duplicate])
     assert owner(graph)["coverage"] == "partial"
     assert "payload_analysis" not in owner(graph)
+
+
+@pytest.mark.parametrize("xml", [
+    "<StaticResource><contentType>text/csv</contentType></StaticResource>",
+    "<StaticResource><cacheControl/><contentType>text/csv</contentType></StaticResource>",
+    descriptor().content.replace("Public", "Other"),
+    descriptor().content.replace("Public", "public"),
+    descriptor(extra="<cacheControl>Private</cacheControl>").content,
+    descriptor(extra="<content>Y29kZSxuYW1lCg==</content>").content,
+    descriptor(extra="<fullName>Other</fullName>").content,
+    descriptor(extra="<description>One</description><description>Two</description>").content,
+])
+def test_valid_csv_never_hides_invalid_or_unverified_descriptor_semantics(xml):
+    graph = build_graph([body(), replace(descriptor(), content=xml)])
+    assert owner(graph)["coverage"] == "partial"
+    assert codes(graph) - {"asset_payload_not_analyzed", "asset_payload_descriptor_unverified"}
+
+
+def test_private_cache_and_matching_explicit_full_name_are_supported():
+    xml = descriptor(extra="<fullName>Airports</fullName>")
+    graph = build_graph([body(), replace(xml, content=xml.content.replace("Public", "Private"))])
+    assert owner(graph)["coverage"] == "semantic" and not graph["diagnostics"]
