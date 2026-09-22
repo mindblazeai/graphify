@@ -88,7 +88,7 @@ Engine `salesforce-11` adds seven policy adapters. FieldRestrictionRule uses its
 
 NotificationTypeConfig owns a `NotificationDeliverySetting` for each distinct notification name. Each member references its notification and configured application without crossing sibling settings. Actual custom notifications bind only to independent CustomNotificationType declarations; provider-standard names remain unresolved NotificationType identities, not invented custom components. Application API names prefer an exact ExternalClientApplication over ConnectedApp, following the guide's ECA precedence rule. Salesforce also identifies ECA as [external client apps](https://developer.salesforce.com/docs/platform/accsdk/guide/acc-sdk-setup-auth-external.html); package prefixes are never stripped. Disabled settings still describe configuration, not effective delivery or access.
 
-Prompt images bind declared ContentAssets; conflicting image/video/link media stays partial. Deprecated explicit app-name/namespace fields have a defined identity contract. Documented custom-permission and encoded profile filters link their declarations; standard-permission filters remain literal configuration. Internal app/user/page keys, unknown criteria and new properties stay partial rather than becoming guessed metadata. Body text and external URLs are not parsed as merge templates.
+Prompt images bind declared ContentAssets; conflicting image/video/link media stays partial. Deprecated explicit app-name/namespace fields have a defined identity contract. Documented custom-permission and encoded profile filters link their declarations; standard-permission filters remain literal configuration. Engine 17 also binds the verified modern application slot (see below). User/page keys, unimplemented experience contexts, unknown criteria and new properties stay partial rather than becoming guessed metadata. Body text and external URLs are not parsed as merge templates.
 
 CleanDataService owns separate CleanDataRule and CleanDataMapping members. The v68 guide's input/output example (printed pages 614–615) places Salesforce fields and virtual data-service fields on opposite sides of each mapping. The adapter derives direction from the rule, mapping, row and pair object contexts; only exact independently declared Salesforce API names resolve. Virtual names, field labels and internal match-engine/rule keys never become guessed Salesforce fields or MatchingRules. Missing/ambiguous context stays partial. Virtual service schema is not indexed, so these sources retain that explicit gap even when all their Salesforce field links resolve. Impact counts may roll members up to the service; dependency traversal must not jump across unrelated mappings or rules.
 
@@ -173,6 +173,27 @@ checks. Supported action/boolean/integer/enum literals and cardinality are
 validated; unknown properties, wrong selector contexts, missing identities and
 bounded-input limits keep coverage partial. Disabled rules remain configuration,
 not evidence of actual moderation, membership, delivery or user access.
+
+## Prompt application identity and values (engine 17)
+
+A read-only Metadata API 62.0 `describeValueType(PromptVersion)` check verified
+`customApplication` as a `CustomApplication` foreign key and `experience` as
+the `Lightning` / `Site` enum. The reviewed adapter records the provider-schema
+SHA-256 in `graphify/salesforce/prompts.py`; it does not ship customer metadata,
+query records or turn every non-foreign-key string into a proven literal.
+
+Application names bind independently indexed, type-scoped API identities.
+IDs bind only matching case-sensitive catalog IDs, not prefixes or labels.
+Missing, excluded or ambiguous targets keep coverage partial. Conflicting
+modern and deprecated application slots do not choose an arbitrary winner.
+References carry their XML line, source hash and schema-contract name.
+
+Required version fields, integer/boolean/date lexical forms and documented
+enum values are validated. Duplicate, nested, empty typed, unknown and oversized
+version collections remain explicit gaps. `experienceContext`, user identities,
+page keys and record-type context are still unsupported; recognizing a field
+in the provider schema alone does not implement its semantics. Coverage is
+per supplied component, not a promise of every possible Prompt configuration.
 
 ## Maintenance and verification
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .model import Facts
-from .experience import SHAPES as EXPERIENCE_SHAPES, parse_experience, shape_path, site_reference
+from .experience import SHAPES as EXPERIENCE_SHAPES, parse_experience, shape_path
 from .translations import SHAPES as TRANSLATION_SHAPES, parse_translation
 from .assets import SHAPES as ASSET_SHAPES, parse_asset
 from .policies import SHAPES as POLICY_SHAPES, parse_policy

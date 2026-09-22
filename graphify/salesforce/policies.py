@@ -9,6 +9,7 @@ from collections import Counter
 import re
 
 from .rule_expressions import restriction_expression
+from .prompts import MAX_VERSIONS, application_references, validate_prompt_version
 
 SHAPES = {
     "FieldRestrictionRule": {"": "active classification classificationType description enforcementType masterLabel recordFilter targetEntity userCriteria version"},
@@ -20,7 +21,7 @@ SHAPES = {
     },
     "Prompt": {
         "": "masterLabel promptVersions",
-        "promptVersions": "actionButtonLabel actionButtonLink body customApplication delayDays description dismissButtonLabel displayPosition displayType elementRelativePosition endDate header image imageAltText imageLink imageLocation indexWithIsPublished indexWithoutIsPublished isPublished masterLabel publishedByUser publishedDate referenceElementContext shouldDisplayActionButton shouldIgnoreGlobalDelay startDate stepNumber targetAppDeveloperName targetAppNamespacePrefix targetPageKey1 targetPageKey2 targetPageKey3 targetPageKey4 targetPageType targetRecordType themeColor themeSaturation timesToDisplay title uiFormulaRule userAccess userProfileAccess versionNumber videoLink",
+        "promptVersions": "actionButtonLabel actionButtonLink body customApplication delayDays description dismissButtonLabel displayPosition displayType elementRelativePosition endDate experience experienceContext header image imageAltText imageLink imageLocation indexWithIsPublished indexWithoutIsPublished isPublished masterLabel publishedByUser publishedDate referenceElementContext shouldDisplayActionButton shouldIgnoreGlobalDelay startDate stepNumber targetAppDeveloperName targetAppNamespacePrefix targetPageKey1 targetPageKey2 targetPageKey3 targetPageKey4 targetPageType targetRecordType themeColor themeSaturation timesToDisplay title uiFormulaRule userAccess userProfileAccess versionNumber videoLink",
         "promptVersions/uiFormulaRule": "booleanFilter criteria",
         "promptVersions/uiFormulaRule/criteria": "leftValue operator rightValue",
     },
@@ -107,29 +108,25 @@ def parse_policy(facts, root, kind, *, issue, scalar, ref, children):
         versions = children(root, "promptVersions")
         if not versions:
             issue("prompt_versions_missing")
+        if len(versions) > MAX_VERSIONS:
+            issue("prompt_version_limit", limit=MAX_VERSIONS)
+            return
         for version in versions:
+            validate_prompt_version(version, issue=issue, scalar=scalar, children=children)
+            application_references(version, issue=issue, scalar=scalar, ref=ref, children=children)
             image = scalar(version, "image")
             if image and (scalar(version, "imageLink") or scalar(version, "videoLink")):
                 issue("prompt_media_context_conflict", image)
             else:
                 ref(image, "ContentAsset", identity_contract="prompt_image")
-            # Internal fields and page keys don't provide a documented metadata
-            # identity, even if their text resembles an existing app or record.
-            for tag in ("customApplication", "publishedByUser", "referenceElementContext", "targetRecordType"):
+            # These context-specific slots still lack implemented binding
+            # semantics; a known schema field alone cannot close their gap.
+            for tag in ("experienceContext", "publishedByUser", "referenceElementContext", "targetRecordType"):
                 if n := scalar(version, tag):
                     issue("prompt_identity_context_unverified", n, property=tag)
             for tag in ("targetPageKey1", "targetPageKey2", "targetPageKey3", "targetPageKey4", "targetPageType"):
                 if n := scalar(version, tag):
                     issue("prompt_page_identity_unverified", n, property=tag)
-            app = scalar(version, "targetAppDeveloperName")
-            namespace = scalar(version, "targetAppNamespacePrefix")
-            if app:
-                name = value(app)
-                if namespace:
-                    name = value(namespace) + "__" + name
-                ref(app, "CustomApplication", name=name, identity_contract="prompt_app")
-            elif namespace:
-                issue("prompt_application_context_missing", namespace)
             enum(scalar(version, "userAccess"), {"Everyone", "SpecificPermissions"})
             enum(scalar(version, "userProfileAccess"), {"Everyone", "SpecificProfiles"})
             for rule in children(version, "uiFormulaRule"):

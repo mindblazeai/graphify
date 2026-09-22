@@ -181,7 +181,10 @@ def test_notification_invalid_contract_is_explicitly_partial(old, new, code):
 
 
 def prompt(contents):
-    return source("Prompt", "<Prompt>\n<promptVersions>\n" + contents + "\n</promptVersions>\n</Prompt>")
+    required = "<body>Message</body><displayType>DockedComposer</displayType><masterLabel>Example</masterLabel><title>Example</title><versionNumber>1</versionNumber>"
+    if "<body>" in contents:
+        required = required.replace("<body>Message</body>", "")
+    return source("Prompt", "<Prompt>\n<promptVersions>\n" + contents + required + "\n</promptVersions>\n</Prompt>")
 
 
 def criterion(left, right="true", operator="EQUAL"):
@@ -202,7 +205,7 @@ def test_prompt_conflicting_media_context_has_no_guessed_asset_reference(tag):
     assert not graph["edges"] and "prompt_media_context_conflict" in codes(graph)
 
 
-@pytest.mark.parametrize("tag", ["customApplication", "publishedByUser", "referenceElementContext", "targetRecordType",
+@pytest.mark.parametrize("tag", ["experienceContext", "publishedByUser", "referenceElementContext", "targetRecordType",
                                     "targetPageKey1", "targetPageType", "experience"])
 def test_prompt_internal_ids_page_keys_and_unknown_properties_stay_partial(tag):
     graph = build_graph([prompt(f"<{tag}>Example</{tag}>"), catalog("CustomApplication", "Example"), catalog("RecordType", "Case.Example")])
