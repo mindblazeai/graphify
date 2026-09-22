@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import Counter
 import re
 
+from .call_centers import parse_open_cti
 from .model import salesforce_id
 
 
@@ -270,14 +271,7 @@ def parse_setup(facts, root, kind, *, issue, scalar, ref, children):
     elif kind == "CallCenter":
         for tag in ("displayName", "displayNameLabel", "internalNameLabel"):
             scalar(root, tag, required=True)
-        for group in bounded(root, "sections", 128):
-            scalar(group, "name", required=True)
-            scalar(group, "label", required=True)
-            for n in bounded(group, "items", 128):
-                for tag in ("name", "label", "value"):
-                    scalar(n, tag, required=True)
-        if n := scalar(root, "customSettings"):
-            issue("call_center_custom_settings_unverified", n)
+        parse_open_cti(facts, root, issue=issue, scalar=scalar, ref=ref, children=children)
         for n in bounded(root, "contactCenterChannels", 128):
             for tag, target_kind in (("channel", "MessagingChannel"), ("contactCenter", "CallCenter"),
                                      ("omniCallbackFallbackQueue", "Queue"), ("voiceMailFallbackQueue", "Queue"), ("voiceMailHandler", "Flow")):

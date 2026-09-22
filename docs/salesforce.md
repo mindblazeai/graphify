@@ -110,7 +110,29 @@ Engine `salesforce-13` adds typed setup definitions and six explicitly routed Se
 
 HomePageLayout links custom HomePageComponent names and recognizes a bounded set of platform widgets. Unknown standard-widget tokens remain partial. ForecastingType validates modes/options and explicit model/group/split references; numeric date modes never manufacture date-field dependencies. Legacy Community means a zone, not an Experience Cloud Network; documented inactive Chatter Answers properties are ignored. Iframe allowlist URLs are literals, not Visualforce components. Empty, fully supported definitions may legitimately have zero dependencies.
 
-ManagedTopics uses the file's exact site identity and site-scoped member/parent declarations, with duplicate, cycle, dotted-scope and unknown-enum guards. ManagedContentType declares its named CMS fields (including the provider-returned built-in MEDIA definition kind), not Salesforce fields or CMS content records. Its name-field, field-count and localization rules are checked. This is definition coverage, not embedded CMS content analysis. NetworkBranding links its explicit Network and Document slots; dynamic asset URLs remain partial. SiteDotCom archives, opaque CallCenter adapter settings and notification User records are not silently treated as analyzed. Email recipients and literal adapter/configuration values are not copied into graph facts.
+ManagedTopics uses the file's exact site identity and site-scoped member/parent declarations, with duplicate, cycle, dotted-scope and unknown-enum guards. ManagedContentType declares its named CMS fields (including the provider-returned built-in MEDIA definition kind), not Salesforce fields or CMS content records. Its name-field, field-count and localization rules are checked. This is definition coverage, not embedded CMS content analysis. NetworkBranding links its explicit Network and Document slots; dynamic asset URLs remain partial. SiteDotCom archives, undocumented CallCenter adapter settings and notification User records are not silently treated as analyzed. Email recipients and literal adapter/configuration values are not copied into graph facts.
+
+Engine 23 adds bounded Open CTI CallCenter settings, based on Salesforce's
+[required](https://developer.salesforce.com/docs/service/api-cti/guide/sforce-api-cti-call-def-file-required.html),
+[optional](https://developer.salesforce.com/docs/service/api-cti/guide/sforce-api-cti-call-def-file-optional.html)
+and [sample](https://developer.salesforce.com/docs/service/api-cti/guide/sforce-api-cti-call-def-file-sample.html)
+contracts. Exact local `/apex/PageName` primary and standby URLs reference
+independently declared ApexPage identities, preserving namespaces. Mirrored
+root, section and flat-JSON settings must agree; each original XML line/hash
+remains evidence, without duplicate primary edges. Primary and standby keep
+separate configuration roles, even when they name the same page. These are
+configured references, not proof of runtime execution or which adapter wins.
+
+Only documented general/dialing settings are interpreted. The parser bounds
+JSON to 64 KiB, sections/items/JSON keys to 128 each and values to 4,096
+characters. Duplicate keys, nested JSON, unknown sections/options, invalid
+dimensions/modes, incomplete standby/timeout pairs, Canvas overrides and legacy
+adapters retain explicit gaps. Voice-only channel definitions do not acquire
+Open CTI requirements. Absolute HTTP(S) locations are not guessed local pages;
+dynamic, credential-bearing or unverified relative URLs remain partial. Adapter
+URLs and arbitrary setting values are not serialized into facts or fetched.
+Missing/excluded page targets remain unresolved and rebind when the scoped
+catalog changes. No User or business records are queried.
 
 Profile-backed permission captures use `PermissionSet` API sources at `salesforce-api/permissions/<catalog Salesforce ID>/{PermissionSet,FieldPermissions,ObjectPermissions,SetupEntityAccess,status}.json`. API version `v63.0` includes `PermissionsViewAllFields`; this broad object permission does not invent an individual grant for every field. Owner identity, `IsOwnedByProfile`, ProfileId, record IDs, ParentId and boolean permission flags are validated. Object/field grants require independently declared targets. Setup access resolves only against exact IDs supplied by the scoped catalog; missing IDs stay unresolved and collisions ambiguous. A verified profile owner adds a structural Profile → backing PermissionSet member link, allowing profile exploration to reach its grants. Explicitly disabled permissions in REST and XML use `configures_access`, not `grants_access`.
 
