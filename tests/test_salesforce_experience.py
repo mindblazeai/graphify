@@ -214,6 +214,8 @@ def test_site_profile_assets_and_users_have_distinct_kinds_and_honest_gaps():
                                       ("UserCriteria", "<userTypes>Internal</userTypes><creationAgeInSeconds>100</creationAgeInSeconds>"),
                                       ("ModerationRule", "<userMessage>{!Case.Fake__c}</userMessage>")])
 def test_site_member_name_binds_network_without_underscore_or_suffix_guess(kind, body):
+    if kind == "ModerationRule":
+        body += "<action>Block</action><active>false</active><masterLabel>Example</masterLabel>"
     g = build_graph([source(kind, f"<{kind}>{body}</{kind}>", "Example Site.Member"), catalog("Network", "Example Site"),
                      catalog("CustomSite", "Example Site"), catalog("CustomSite", "Example_Site"), catalog("SiteDotCom", "Example_Site1")])
     assert len(g["edges"]) == 1 and g["edges"][0]["target"] == node_id("Network", "Example Site")

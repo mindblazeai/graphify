@@ -72,7 +72,7 @@ Type-scoped XML adapters follow Salesforce's [Metadata API Developer Guide](http
 
 Role access settings are configuration, not effective grants. Queue membership preserves direct, internal-subordinate and all-subordinate selectors without expanding users or inheritance. Explicit usernames are unresolved `SalesforceUser` references and keep the queue partial; no User records are fetched. Service-channel priority fields resolve against both real field names and exact catalog IDs, with object/type/case checks and ambiguous collisions retained. Unclassified console components remain unresolved instead of being guessed to be Apex or Lightning.
 
-Lead conversions use one owned `LeadConversionMapping` member per declared field pair, with reads and writes kept separate. Consumers should roll these members up to their owning settings component for impact counts but must not traverse through unrelated sibling pairs. Moderation retains explicit object/field/keyword/user-criteria links. Metadata-only `RawBody`/`RawCommentBody` fields are not renamed to normal API fields; those provider-only fields keep affected moderation rules partial. Disabled topic settings still reference their explicit object, and profile policies bind actual profile names without display-label guesses. These adapters add static semantics, not complete runtime behavior or effective access evaluation.
+Lead conversions use one owned `LeadConversionMapping` member per declared field pair, with reads and writes kept separate. Consumers should roll these members up to their owning settings component for impact counts but must not traverse through unrelated sibling pairs. Moderation retains explicit object/field/keyword/user-criteria links. Engine 16 models the documented Metadata API-only `RawBody`/`RawCommentBody` selectors separately from normal API fields (see below). Disabled topic settings still reference their explicit object, and profile policies bind actual profile names without display-label guesses. These adapters add static semantics, not complete runtime behavior or effective access evaluation.
 
 Engine `salesforce-9` adds Experience Cloud and presence adapters. `Network` is the site's named identity; explicit `site` and `picassoSite` properties link its separate `CustomSite` and `SiteDotCom` components. Do not replace spaces with underscores or append suffixes to guess these identities. Moderation rules, keyword lists and user criteria use the documented site prefix of their full names. Networks link documented email-template slots, profiles, permission sets, custom tabs and footer documents. Role labels, page-override enums, standard tabs, keywords, user-type selectors and literal prose are not references. Device-activation templates use exact catalog IDs, not a display-name fallback.
 
@@ -157,6 +157,22 @@ Network now recognizes the WSDL's optional `enableExpFriendlyUrlsAsDefault` and
 reset template fields bind exact EmailTemplate identities. Salesforce documents
 these [headless-flow template settings](https://help.salesforce.com/s/articleView?id=sf.headless_identity_experience_settings_parent.htm&language=en_US&type=5).
 This does not claim full semantics for undocumented Network fields.
+
+## Moderation content selectors (engine 16)
+
+The pinned Salesforce [ModeratedEntityField contract](https://github.com/forcedotcom/sf-skills/blob/c217b703b3e5a3c279f1a510d8703161b14bd0a5/skills/platform-metadata-api-context-get/assets/metadata_api/ModerationRule.json)
+defines `FeedItem.RawBody` and `FeedComment.RawCommentBody` exclusively for the
+Metadata API. They are content selectors, not aliases for REST `Body` or
+`CommentBody`. `moderates_content` edges retain the exact selector and its XML
+line/hash while binding the independently declared entity. No synthetic field
+declaration is added; field Where Used views do not claim a false alias.
+
+Ordinary moderation fields still require real field declarations. Site, entity,
+keyword list and repeatable user-criteria references have independent identity
+checks. Supported action/boolean/integer/enum literals and cardinality are
+validated; unknown properties, wrong selector contexts, missing identities and
+bounded-input limits keep coverage partial. Disabled rules remain configuration,
+not evidence of actual moderation, membership, delivery or user access.
 
 ## Maintenance and verification
 

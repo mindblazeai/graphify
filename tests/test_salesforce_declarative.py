@@ -187,16 +187,18 @@ def test_lead_mapping_retains_correct_object_pairs_reads_writes_and_member_owner
     assert all(e["resolution"] == "resolved" for e in g["edges"])
 
 
-def test_moderation_declared_fields_and_criteria_keep_api_only_field_gap_explicit():
+def test_moderation_metadata_only_selectors_do_not_invent_ordinary_field_aliases():
     g = build_graph([source("ModerationRule", """<ModerationRule><userCriteria>Site.NewMembers</userCriteria>
       <entitiesAndFields><entityName>FeedItem</entityName><fieldName>RawBody</fieldName><keywordList>Site.Words</keywordList></entitiesAndFields>
       <entitiesAndFields><entityName>FeedComment</entityName><fieldName>CommentBody</fieldName></entitiesAndFields>
       <userMessage>{!Case.NotATemplate__c}</userMessage></ModerationRule>""", name="Site.Rule"),
       catalog("CustomObject", "FeedItem"), catalog("CustomObject", "FeedComment"), catalog("CustomField", "FeedItem.Body"),
       catalog("CustomField", "FeedComment.CommentBody"), catalog("UserCriteria", "Site.NewMembers"), catalog("KeywordList", "Site.Words")])
-    assert {e["target_name"] for e in refs(g, "FieldPath")} == {"FeedItem.RawBody", "FeedComment.CommentBody"}
-    assert next(e for e in refs(g, "FieldPath") if e["target_name"] == "FeedItem.RawBody")["resolution"] == "unresolved"
-    assert "moderation_metadata_only_field" in codes(g)
+    assert {e["target_name"] for e in refs(g, "FieldPath")} == {"FeedComment.CommentBody"}
+    selector, = [e for e in g["edges"] if e["relation"] == "moderates_content"]
+    assert selector["target"] == node_id("CustomObject", "FeedItem")
+    assert selector["metadata_selector"] == "RawBody" and selector["resolution"] == "resolved"
+    assert not any(e["target"] == node_id("CustomField", "FeedItem.Body") for e in g["edges"])
     assert refs(g, "Network")[0]["target_name"] == "Site"
     assert refs(g, "Network")[0]["resolution"] == "unresolved"
 

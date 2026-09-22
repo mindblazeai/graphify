@@ -17,6 +17,7 @@ from .external_clients import SHAPES as EXTERNAL_CLIENT_SHAPES, parse_external_c
 from .setup import SHAPES as SETUP_SHAPES, parse_setup
 from .settings import SHAPES as SETTINGS_SHAPES, parse_settings
 from .audience import SHAPES as AUDIENCE_SHAPES, parse_audience
+from .moderation import parse_moderation
 
 if TYPE_CHECKING:
     from .metadata import Element
@@ -264,15 +265,5 @@ def parse_declarative(facts: Facts, root: Element, kind: str) -> None:
                 field_ref(target, output_obj, "writes", pair_owner)
 
     elif kind == "ModerationRule":
-        ref(scalar(root, "userCriteria"), "UserCriteria")
-        for entry in children(root, "entitiesAndFields"):
-            obj = object_context(entry, "entityName")
-            item = scalar(entry, "fieldName")
-            field_ref(item, obj)
-            ref(scalar(entry, "keywordList"), "KeywordList")
-            if item and (obj.casefold(), item.text.strip().casefold()) in {
-                ("feeditem", "rawbody"), ("feedcomment", "rawcommentbody")
-            }:
-                # Explicit API-only field names are not aliases for Body.
-                issue("moderation_metadata_only_field", item)
-        site_reference(facts, root, issue=issue, ref=ref)
+        parse_moderation(facts, root, issue=issue, scalar=scalar, ref=ref,
+                         children=children, field_ref=field_ref)
