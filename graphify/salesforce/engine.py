@@ -39,6 +39,9 @@ def extract_facts(source: Source) -> dict:
     elif source.path.startswith("salesforce-api/sobjects/") and source.path.endswith("/describe.json"):
         from .schema import parse_describe
         parse_describe(facts)
+    elif source.metadata_type == "CustomField" and source.path.startswith("salesforce-api/fieldDefinitions/"):
+        from .field_definitions import parse_field_definition
+        parse_field_definition(facts)
     elif source.metadata_type == "PermissionSet" and source.path.startswith("salesforce-api/permissions/"):
         from .permissions import parse_permissions
         parse_permissions(facts)

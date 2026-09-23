@@ -41,6 +41,7 @@ Use the Salesforce command for cross-file metadata binding; the normal Graphify 
 | Experience audiences | Container-scoped audiences, profile/field/custom-permission criteria, record-type criteria and typed report/dashboard/navigation targets; criteria text remains literal |
 | JSON bundles | Parsed JSON and explicitly typed component-reference properties, with JSON-path provenance |
 | Captured REST schema | Real describe fields, parent lookup names and child relationship names, including standard/compound fields absent from retrieved object XML |
+| Captured Tooling field schema | Verified FieldDefinition/EntityParticle identities, explicit lookup targets, controlling and indirect-match fields, and compound-member ownership; exact JSON-path/line/hash evidence |
 | Captured Analytics report types | Type-scoped column aliases bind actual report XML references to independently declared fields; API column availability alone does not create a usage |
 | Captured profile-backed permission sets | REST direct field/object/setup grants; verified owner/profile and setup metadata IDs; disabled permissions remain configuration references |
 | Future or binary formats | Identity and structural/catalog coverage; no invented semantics |
@@ -90,6 +91,32 @@ Engine `salesforce-10` adds typed object/field/global-value-set/standard-value-s
 Lightning themes bind their default BrandingSet by documented name or independently cataloged ID, preserving ambiguous collisions. Known image properties bind exact ContentAsset names or the documented local `/file-asset/<API name>` route with an optional numeric version. The original route/version remains evidence, not proof that that payload version was analyzed. Absolute URLs, org overrides, arbitrary basenames and encoded paths are not normalized into local metadata. See Salesforce's [asset URL contract](https://help.salesforce.com/s/articleView?id=004652690&language=en_US&type=1). Unknown branding properties and definition identities stay partial.
 
 ContentAsset, Document and StaticResource XML envelopes report `asset_payload_not_analyzed` unless a supported original payload is independently validated and paired (CSV, engine-22 images, or engine-24 Original ContentAssets). Asset `originNetwork` and exact document-folder references are supported, but client filenames, zip entries and the provider-reserved asset-link `name` are not guessed as metadata identities. GlobalValueSet values and RemoteSiteSetting URLs are data/configuration, not invented dependencies; a fully understood component can legitimately have no outgoing links. Custom notification `NotificationApiAction` targets link Apex classes; client-side `Share` actions do not. These adapters do not evaluate effective sharing, download binary payloads or execute notification actions.
+
+Engine `salesforce-25` adds captured Tooling field definitions using the
+[FieldDefinition](https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/tooling_api_objects_fielddefinition.htm)
+and [EntityParticle](https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/tooling_api_objects_entityparticle.htm)
+contracts. Inputs must be `source_kind="api"`, `metadata_type="CustomField"`,
+with the independently cataloged DurableId in `Source.salesforce_id`, and path
+`salesforce-api/fieldDefinitions/<Object.Field>/definition.json`. The bounded
+128 KiB envelope has `formatVersion: 1`, `apiVersion: "v67.0"`, `kind`, `fullName`,
+`durableId` and `record`. Duplicate keys, nonfinite values, excessive nesting,
+wrong identities or namespaces are rejected. The caller must scope and verify
+the original single-row response; the parser performs no network access.
+
+Field and object API names come from explicit declarations, never the spelling
+of DurableId or the display `DataType`. Lookup targets, controlling fields and
+compound-member owners bind only to independently indexed metadata. Removing a
+target reopens its binding even when syntax facts are reused. Ownership edges
+carry `structural_parent: true`: consumers may navigate to that parent but must
+not use the upward edge to construct dependency paths through unrelated members.
+Missing lookup
+targets, incomplete polymorphic declarations, compound-member lists, calculated
+field bodies, unknown value types and unsupported nonempty CustomField Metadata
+properties remain partial. Formula, rollup, lookup-filter and value-set bodies
+in these supplemental captures are not covered by this adapter; ordinary XML
+adapters remain separate. No User/business-record query or code execution is
+performed, and a standard field with no outgoing usage is not proof of being
+unused.
 
 Engine `salesforce-24` validates single-version ContentAsset PNG/JPEG payloads
 against the original adjacent `.asset-meta.xml`. Salesforce's
